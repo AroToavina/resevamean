@@ -1,0 +1,128 @@
+{% extends 'client/base.html' %}
+{% block title %}Accueil{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<div class="hero">
+    <div class="container text-center">
+        <div class="fade-up">
+            <p class="hero-subtitle mb-3">Bienvenue</p>
+            <h1 class="hero-title mb-4">Découvrez <em>l'art du séjour</em><br>à votre mesure</h1>
+        </div>
+        <div class="search-card p-4 mx-auto fade-up fade-up-2" style="max-width:780px;">
+            <form action="{% url 'client:recherche' %}" method="get">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label">Destination</label>
+                        <select name="ville" class="form-select" required>
+                            <option value="">Choisir une ville</option>
+                            {% for v in villes %}<option value="{{ v.pk }}">{{ v.nom }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Arrivée</label>
+                        <input type="date" name="date_arrivee" class="form-control" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Départ</label>
+                        <input type="date" name="date_depart" class="form-control" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Adultes</label>
+                        <input type="number" name="adultes" class="form-control" value="1" min="1" max="10">
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-accent w-100" style="padding:0.7rem;">
+                            <i class="fas fa-search me-2"></i>Rechercher la disponibilité
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Features -->
+<div class="container my-5 py-2">
+    <div class="row text-center g-4">
+        <div class="col-md-4 fade-up">
+            <div class="card p-4 h-100">
+                <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+                <h6 style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;">Réservation Sécurisée</h6>
+                <p class="text-muted small mb-0">Paiement sécurisé par Bankily ou carte Visa</p>
+            </div>
+        </div>
+        <div class="col-md-4 fade-up fade-up-1">
+            <div class="card p-4 h-100">
+                <div class="feature-icon"><i class="fas fa-clock"></i></div>
+                <h6 style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;">Disponibilité en Temps Réel</h6>
+                <p class="text-muted small mb-0">Vérification instantanée des chambres disponibles</p>
+            </div>
+        </div>
+        <div class="col-md-4 fade-up fade-up-2">
+            <div class="card p-4 h-100">
+                <div class="feature-icon"><i class="fas fa-concierge-bell"></i></div>
+                <h6 style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;">Services Inclus</h6>
+                <p class="text-muted small mb-0">Accès à de nombreux services pendant votre séjour</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Évaluations -->
+{% if services_evalues %}
+<div style="background:linear-gradient(135deg,var(--navy) 0%,#1e4d7a 100%);padding:70px 0;position:relative;overflow:hidden;">
+    <div style="position:absolute;top:-40px;right:-40px;width:200px;height:200px;border-radius:50%;background:rgba(201,168,76,0.08);"></div>
+    <div style="position:absolute;bottom:-60px;left:-30px;width:250px;height:250px;border-radius:50%;background:rgba(201,168,76,0.05);"></div>
+    <div class="container" style="position:relative;">
+        <div class="text-center mb-5 fade-up">
+            <span style="font-size:0.75rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);font-weight:600;">Témoignages</span>
+            <h3 style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:2.2rem;color:white;margin-top:0.5rem;">Avis de nos clients</h3>
+            <hr style="max-width:60px;margin:1rem auto;border:none;border-top:2px solid var(--gold);">
+        </div>
+        <div class="row g-3">
+            {% for service in services_evalues %}
+            <div class="col-md-6 col-lg-3 fade-up" style="animation-delay:{{ forloop.counter0 }}00ms">
+                <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(201,168,76,0.2);border-radius:12px;padding:1.5rem;text-align:center;backdrop-filter:blur(10px);transition:transform 0.2s,background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)';this.style.transform='translateY(-4px)'" onmouseout="this.style.background='rgba(255,255,255,0.07)';this.style.transform='none'">
+                    <span style="font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);font-weight:600;background:rgba(201,168,76,0.15);padding:3px 10px;border-radius:20px;">{{ service.get_categorie_display }}</span>
+                    <h6 style="font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:600;color:white;margin:0.75rem 0 0.5rem;">{{ service.nom_service }}</h6>
+                    <div style="color:var(--gold);font-size:1.1rem;margin-bottom:0.3rem;">
+                        {% with avg=service.moyenne %}{% for i in "12345" %}
+                            {% if forloop.counter <= avg %}<i class="fas fa-star"></i>
+                            {% elif forloop.counter|add:"-1" < avg %}<i class="fas fa-star-half-alt"></i>
+                            {% else %}<i class="far fa-star" style="opacity:0.4;"></i>{% endif %}
+                        {% endfor %}{% endwith %}
+                    </div>
+                    <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;color:white;">{{ service.moyenne|floatformat:1 }}<span style="font-size:0.85rem;color:rgba(255,255,255,0.5);font-family:'Jost',sans-serif;">/5</span></div>
+                    <div style="font-size:0.73rem;color:rgba(255,255,255,0.45);margin-top:4px;">{{ service.nb_evaluations }} avis</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Destinations -->
+{% if villes %}
+<div class="container py-5 text-center">
+    <span class="section-label">Explorer</span>
+    <h3 class="section-title mb-4">Nos Destinations</h3>
+    <div class="d-flex flex-wrap gap-2 justify-content-center">
+        {% for v in villes %}
+        <a href="{% url 'client:recherche' %}?ville={{ v.pk }}" class="btn btn-outline-accent">
+            <i class="fas fa-map-marker-alt me-2" style="font-size:0.75rem;"></i>{{ v.nom }}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const today2 = new Date(); today2.setDate(today2.getDate() + 1);
+const tomorrowStr2 = today2.toISOString().split('T')[0];
+document.querySelectorAll('input[type="date"]').forEach(i => i.min = tomorrowStr2);
+</script>
+{% endblock %}

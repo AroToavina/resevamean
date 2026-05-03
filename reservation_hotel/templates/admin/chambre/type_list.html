@@ -1,0 +1,61 @@
+{% extends 'admin/base.html' %}
+{% block title %}Types de Chambre{% endblock %}
+{% block page_title %}Types de Chambre{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div></div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'chambre:equipement_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-tools me-2"></i>Équipements
+        </a>
+        <a href="{% url 'chambre:type_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Nouveau Type
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    {% for tc in types %}
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width:48px;height:48px;flex-shrink:0;">
+                        <i class="fas fa-bed text-primary fa-lg"></i>
+                    </div>
+                    <h5 class="card-title mb-0">{{ tc.libelle }}</h5>
+                </div>
+                <div class="d-flex gap-3 text-muted small mb-2">
+                    <span><i class="fas fa-users me-1"></i>{{ tc.capacite }} personnes</span>
+                    <span><i class="fas fa-tag me-1"></i>{{ tc.prix_nuit }} MRU/nuit</span>
+                </div>
+                {% if tc.description %}
+                <p class="card-text text-muted small">{{ tc.description|truncatechars:80 }}</p>
+                {% endif %}
+                {% if tc.equipements.exists %}
+                <div class="mb-2">
+                    {% for eq in tc.equipements.all %}
+                    <span class="badge bg-light text-dark border me-1 mb-1">{{ eq.nom }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-white border-top-0 d-flex gap-2">
+                <a href="{% url 'chambre:type_edit' tc.pk %}" class="btn btn-sm btn-outline-primary flex-fill">
+                    <i class="fas fa-edit me-1"></i>Modifier
+                </a>
+                <a href="{% url 'chambre:type_delete' tc.pk %}" class="btn btn-sm btn-outline-danger">
+                    <i class="fas fa-trash"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center text-muted py-5">
+        <i class="fas fa-layer-group fa-3x mb-3"></i>
+        <p>Aucun type de chambre défini</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+<div class="container mt-5">
+  <div class="card p-4 mx-auto" style="max-width: 400px;">
+    <h3>Créer un compte</h3>
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+      <div class="mb-3">
+        <label>Nom</label>
+        <input formControlName="nom" class="form-control" type="text">
+      </div>
+      <div class="mb-3">
+        <label>Email</label>
+        <input formControlName="email" class="form-control" type="email">
+      </div>
+      <div class="mb-3">
+        <label>Mot de passe</label>
+        <input formControlName="password" class="form-control" type="password">
+      </div>
+      <button type="submit" class="btn btn-accent w-100" [disabled]="registerForm.invalid">S'inscrire</button>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,235 @@
+{% extends 'client/base.html' %}
+{% load hashlib_tags %}
+{% block title %}Détail Réservation{% endblock %}
+
+{% block extra_css %}
+<style>
+.star-rating { display: flex; flex-direction: row-reverse; justify-content: flex-end; gap: 4px; }
+.star-rating input { display: none; }
+.star-rating label {
+    font-size: 1.6rem; color: #ddd; cursor: pointer; transition: color 0.15s;
+}
+.star-rating label:hover,
+.star-rating label:hover ~ label,
+.star-rating input:checked ~ label { color: #f0a500; }
+.stars-static { color: #f0a500; }
+.stars-static .empty { color: #ddd; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold mb-0">Détail de votre réservation</h3>
+        <a href="{% url 'client:mes_reservations' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i>Retour
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <!-- Statut -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="fw-bold">{{ resa.chambre.type_chambre.libelle }}</h5>
+                            <p class="text-muted mb-0">{{ resa.chambre.hotel.nom }} — {{ resa.chambre.hotel.adresse }}</p>
+                        </div>
+                        {% if resa.statut == 'en_attente' %}<span class="badge bg-warning text-dark fs-6">En attente</span>
+                        {% elif resa.statut == 'confirmee' %}<span class="badge bg-info fs-6">Confirmée</span>
+                        {% elif resa.statut == 'checkin' %}<span class="badge bg-success fs-6">En séjour</span>
+                        {% elif resa.statut == 'checkout' %}<span class="badge bg-secondary fs-6">Terminée</span>
+                        {% elif resa.statut == 'annulee' %}<span class="badge bg-danger fs-6">Annulée</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Infos séjour -->
+            <div class="card mb-4">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-bold">Votre séjour</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-sm-4">
+                            <div class="text-muted small">Arrivée</div>
+                            <div class="fw-bold">{{ resa.date_arrivee|date:"d/m/Y" }}</div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="text-muted small">Départ</div>
+                            <div class="fw-bold">{{ resa.date_depart|date:"d/m/Y" }}</div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="text-muted small">Durée</div>
+                            <div class="fw-bold">{{ resa.nombre_nuits }} nuit(s)</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="text-muted small">Adultes</div>
+                            <div class="fw-bold">{{ resa.nbr_adultes }}</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="text-muted small">Enfants</div>
+                            <div class="fw-bold">{{ resa.nbr_enfants }}</div>
+                        </div>
+                    </div>
+                    {% if resa.statut == 'checkin' %}
+                    <div class="mt-3 p-3 bg-success bg-opacity-10 rounded border border-success">
+                        <i class="fas fa-door-open me-2 text-success"></i>
+                        <strong>Chambre N° {{ resa.chambre.numero }}</strong> — Étage {{ resa.chambre.etage }}
+                    </div>
+                    {% elif resa.statut == 'confirmee' %}
+                    <div class="mt-3 p-3 bg-info bg-opacity-10 rounded border border-info">
+                        <i class="fas fa-clock me-2 text-info"></i>
+                        Votre chambre est réservée. Le numéro vous sera communiqué à votre arrivée.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Services -->
+            {% if resa.reservation_services.all %}
+            <div class="card mb-4">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-bold"><i class="fas fa-concierge-bell me-2 text-success"></i>Services consommés</h6>
+                </div>
+                <div class="card-body p-0">
+                    {% for rs in resa.reservation_services.all %}
+                    {% with token=resa.pk|resa_token:resa.client.pk %}
+                    {% with eval=resa.evaluations.all %}
+                    <div class="p-3 border-bottom">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="fw-semibold">{{ rs.service.nom_service }}</div>
+                                <div class="text-muted small">{{ rs.quantite }} × {{ rs.service.prix }} MRU = <strong>{{ rs.total }} MRU</strong></div>
+                            </div>
+                            <div class="text-end">
+                                {% if resa.statut == 'checkin' %}
+                                    {# Chercher évaluation existante pour ce service #}
+                                    {% for e in resa.evaluations.all %}
+                                        {% if e.service_id == rs.service.pk %}
+                                        <!-- Déjà évalué -->
+                                        <div class="stars-static">
+                                            {% for i in "12345" %}
+                                            {% if forloop.counter <= e.note %}
+                                            <i class="fas fa-star"></i>
+                                            {% else %}
+                                            <i class="far fa-star empty"></i>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                        <div class="text-muted small">{{ e.note }}/5 — évalué</div>
+                                        {% endif %}
+                                    {% empty %}
+                                    {% endfor %}
+
+                                    {# Bouton évaluer si pas encore évalué #}
+                                    {% with already_eval=False %}
+                                    {% for e in resa.evaluations.all %}{% if e.service_id == rs.service.pk %}{% with already_eval=True %}{% endwith %}{% endif %}{% endfor %}
+                                    {% endwith %}
+                                    <button class="btn btn-sm btn-outline-warning"
+                                            onclick="toggleEvalForm('eval-{{ rs.service.pk }}')">
+                                        <i class="fas fa-star me-1"></i>Évaluer
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Formulaire étoiles (checkin seulement) -->
+                        {% if resa.statut == 'checkin' %}
+                        <div id="eval-{{ rs.service.pk }}" class="mt-3 p-3 bg-light rounded" style="display:none;">
+                            <form method="post" action="{% url 'client:evaluer_service' token rs.service.pk %}">
+                                {% csrf_token %}
+                                <div class="mb-2 fw-semibold small">Votre note pour "{{ rs.service.nom_service }}" :</div>
+                                <div class="star-rating mb-2" id="stars-{{ rs.service.pk }}">
+                                    <input type="radio" name="note" id="s5-{{ rs.service.pk }}" value="5">
+                                    <label for="s5-{{ rs.service.pk }}" title="5 étoiles"><i class="fas fa-star"></i></label>
+                                    <input type="radio" name="note" id="s4-{{ rs.service.pk }}" value="4">
+                                    <label for="s4-{{ rs.service.pk }}" title="4 étoiles"><i class="fas fa-star"></i></label>
+                                    <input type="radio" name="note" id="s3-{{ rs.service.pk }}" value="3">
+                                    <label for="s3-{{ rs.service.pk }}" title="3 étoiles"><i class="fas fa-star"></i></label>
+                                    <input type="radio" name="note" id="s2-{{ rs.service.pk }}" value="2">
+                                    <label for="s2-{{ rs.service.pk }}" title="2 étoiles"><i class="fas fa-star"></i></label>
+                                    <input type="radio" name="note" id="s1-{{ rs.service.pk }}" value="1">
+                                    <label for="s1-{{ rs.service.pk }}" title="1 étoile"><i class="fas fa-star"></i></label>
+                                </div>
+                                <div class="mb-2">
+                                    <input type="text" name="commentaire" class="form-control form-control-sm"
+                                           placeholder="Commentaire (optionnel)">
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-check me-1"></i>Envoyer
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                            onclick="toggleEvalForm('eval-{{ rs.service.pk }}')">
+                                        Annuler
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endwith %}
+                    {% endwith %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Récapitulatif -->
+        <div class="col-lg-4">
+            <div class="card mb-3">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-bold">Récapitulatif financier</h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <td class="text-muted">Chambre</td>
+                            <td class="text-end">{{ resa.montant_chambre|floatformat:2 }} MRU</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Services</td>
+                            <td class="text-end">{{ resa.montant_services|floatformat:2 }} MRU</td>
+                        </tr>
+                        <tr class="fw-bold border-top">
+                            <td>Total</td>
+                            <td class="text-end">{{ resa.montant_total|floatformat:2 }} MRU</td>
+                        </tr>
+                        <tr class="text-success">
+                            <td>Payé</td>
+                            <td class="text-end">{{ resa.montant_paye|floatformat:2 }} MRU</td>
+                        </tr>
+                        {% if resa.montant_restant > 0 %}
+                        <tr class="text-danger">
+                            <td>Restant</td>
+                            <td class="text-end fw-bold">{{ resa.montant_restant|floatformat:2 }} MRU</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+
+            {% with token=resa.pk|resa_token:resa.client.pk %}
+            {% if resa.statut in 'en_attente,confirmee' %}
+            <a href="{% url 'client:annuler_reservation' token %}" class="btn btn-outline-danger w-100">
+                <i class="fas fa-ban me-2"></i>Annuler la réservation
+            </a>
+            {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleEvalForm(id) {
+    const el = document.getElementById(id);
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

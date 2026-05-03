@@ -1,0 +1,50 @@
+{% extends 'client/base.html' %}
+{% block title %}Annuler réservation{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white py-3 text-center">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-exclamation-triangle me-2"></i>Annulation de réservation</h5>
+                </div>
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-ban fa-4x text-danger mb-3 d-block"></i>
+                    <h4 class="fw-bold">Confirmer l'annulation?</h4>
+                    <p class="text-muted">
+                        {{ resa.chambre.type_chambre.libelle }} — {{ resa.chambre.hotel.nom }}<br>
+                        Du {{ resa.date_arrivee|date:"d/m/Y" }} au {{ resa.date_depart|date:"d/m/Y" }}
+                    </p>
+                    {% if resa.montant_paye > 0 %}
+                    {% if remboursement_possible %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Vous avez payé <strong>{{ resa.montant_paye|floatformat:2 }} MRU</strong>.
+                        Annulation dans les 24h — <strong>remboursement prévu</strong> par un agent de l'hôtel.
+                    </div>
+                    {% else %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Aucun remboursement possible.</strong><br>
+                        <small>L'annulation dépasse 24h après la réservation. Montant payé : {{ resa.montant_paye|floatformat:2 }} MRU — non récupérable.</small>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                    <div class="d-flex gap-3 justify-content-center mt-4">
+                        <a href="{% url 'client:mes_reservations' %}" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-times me-2"></i>Non, garder
+                        </a>
+                        <form method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="fas fa-ban me-2"></i>Oui, annuler
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

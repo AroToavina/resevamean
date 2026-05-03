@@ -1,0 +1,119 @@
+{% extends 'client/base.html' %}
+{% block title %}Paiement Bankily{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+
+            <!-- Étape 1 : Numéro Bankily -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white py-3">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-mobile-alt me-2"></i>Étape 1 — Effectuez le virement</h5>
+                </div>
+                <div class="card-body text-center py-4">
+                    <p class="text-muted mb-2">Envoyez exactement</p>
+                    <div class="display-5 fw-bold text-success mb-1">
+                        {% if paiement %}{{ paiement.montant_paye|floatformat:2 }}{% else %}{{ montant_total|floatformat:2 }}{% endif %} MRU
+                    </div>
+                    <p class="text-muted mb-3">au numéro Bankily de <strong>{{ hotel.nom }}</strong> :</p>
+                    <div class="d-inline-block bg-light border rounded-3 px-5 py-3 mb-3">
+                        <span class="display-4 fw-bold text-dark letter-spacing-wide">{{ hotel.num_bankily }}</span>
+                    </div>
+                    <div class="alert alert-warning text-start mt-3 mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Après le virement, <strong>gardez la capture d'écran</strong> et notez le <strong>code de transaction</strong> — vous en aurez besoin à l'étape 2.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Étape 2 : Soumission preuve -->
+            <div class="card">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-upload me-2"></i>Étape 2 — Soumettez votre preuve de paiement</h5>
+                </div>
+                <div class="card-body">
+
+                    {% if paiement and paiement.bankily_detail.code_transaction %}
+                    <!-- Déjà soumis -->
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Preuve de paiement reçue !</strong> Notre équipe va vérifier et confirmer votre réservation sous peu.
+                    </div>
+                    <div class="text-muted small">
+                        Code soumis : <strong>{{ paiement.bankily_detail.code_transaction }}</strong><br>
+                        {% if paiement.bankily_detail.capture_ecran %}
+                        <i class="fas fa-image me-1"></i>Capture d'écran jointe.
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'client:mes_reservations' %}" class="btn btn-outline-primary mt-3">
+                        <i class="fas fa-eye me-2"></i>Suivre ma réservation
+                    </a>
+
+                    {% else %}
+                    <!-- Formulaire de soumission -->
+                    <div class="alert alert-danger mb-3">
+                        <i class="fas fa-lock me-2"></i>
+                        <strong>Important :</strong> Votre réservation ne sera <strong>enregistrée qu'après avoir soumis</strong> les informations de paiement Bankily ci-dessous (numéro, code et capture d'écran).
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data" action="{% url 'client:soumettre_bankily' %}">
+                        {% csrf_token %}
+                        {% if paiement %}
+                        <input type="hidden" name="paiement_id" value="{{ paiement.pk }}">
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Votre numéro Bankily <span class="text-danger">*</span></label>
+                            <input type="text" name="numero_client_bankily" class="form-control form-control-lg"
+                                   placeholder="Ex: 22000000" required
+                                   style="font-family: monospace; letter-spacing: 2px;">
+                            <div class="form-text">Le numéro Bankily depuis lequel vous avez effectué le virement.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Code de transaction Bankily <span class="text-danger">*</span></label>
+                            <input type="text" name="code_transaction" class="form-control form-control-lg"
+                                   placeholder="Ex: BNK20240001234" required
+                                   style="font-family: monospace; letter-spacing: 2px;">
+                            <div class="form-text">Le code affiché dans votre application Bankily après le virement.</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Capture d'écran du virement <span class="text-danger">*</span></label>
+                            <input type="file" name="capture_ecran" class="form-control" accept="image/*" required id="captureInput">
+                            <div class="form-text">Photo ou screenshot confirmant le virement effectué.</div>
+                            <div id="previewContainer" class="mt-2 d-none">
+                                <img id="previewImg" src="" alt="Aperçu" class="img-thumbnail" style="max-height:200px;">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-paper-plane me-2"></i>Envoyer la preuve et confirmer la réservation
+                        </button>
+                    </form>
+                    {% endif %}
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('captureInput')?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            document.getElementById('previewImg').src = ev.target.result;
+            document.getElementById('previewContainer').classList.remove('d-none');
+        };
+        reader.readAsDataURL(file);
+    }
+});
+</script>
+{% endblock %}

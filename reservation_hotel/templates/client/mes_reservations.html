@@ -1,0 +1,97 @@
+{% extends 'client/base.html' %}
+{% block title %}Mes Réservations{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold mb-0">
+            <i class="fas fa-calendar-check me-2 text-primary"></i>Mes Réservations
+        </h3>
+        <span class="text-muted">Bonjour, <strong>{{ client.prenom }}</strong></span>
+    </div>
+
+    {% if not reservations %}
+    <div class="text-center py-5">
+        <i class="fas fa-calendar-times fa-4x text-muted mb-3 d-block"></i>
+        <h5 class="text-muted">Aucune réservation trouvée</h5>
+        <a href="{% url 'client:recherche' %}" class="btn btn-primary mt-3">
+            <i class="fas fa-search me-2"></i>Faire une réservation
+        </a>
+    </div>
+    {% else %}
+    <div class="row g-4">
+        {% for resa in reservations %}
+        {% load hashlib_tags %}
+        <div class="col-md-6">
+            <div class="card h-100 {% if resa.statut == 'annulee' %}border-danger{% elif resa.statut == 'checkin' %}border-success{% endif %}">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <div class="fw-bold">{{ resa.chambre.type_chambre.libelle }}</div>
+                    {% if resa.statut == 'en_attente' %}<span class="badge bg-warning text-dark badge-statut">En attente paiement</span>
+                    {% elif resa.statut == 'confirmee' %}<span class="badge bg-info badge-statut">Confirmée</span>
+                    {% elif resa.statut == 'checkin' %}<span class="badge bg-success badge-statut">En séjour</span>
+                    {% elif resa.statut == 'checkout' %}<span class="badge bg-secondary badge-statut">Terminée</span>
+                    {% elif resa.statut == 'annulee' %}<span class="badge bg-danger badge-statut">Annulée</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-location-dot me-2"></i>
+                        {{ resa.chambre.hotel.ville }}
+                    </p>
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-hotel me-2"></i>{{ resa.chambre.hotel.nom }} 
+                    </p>
+                    
+                    <div class="row g-2 text-sm">
+                        <div class="col-6">
+                            <div class="text-muted small">Arrivée</div>
+                            <div class="fw-semibold">{{ resa.date_arrivee|date:"d/m/Y" }}</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-muted small">Départ</div>
+                            <div class="fw-semibold">{{ resa.date_depart|date:"d/m/Y" }}</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-muted small">Durée</div>
+                            <div class="fw-semibold">{{ resa.nombre_nuits }} nuit(s)</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-muted small">Personnes</div>
+                            <div class="fw-semibold">{{ resa.nbr_adultes }} A{% if resa.nbr_enfants %} + {{ resa.nbr_enfants }} E{% endif %}</div>
+                        </div>
+                    </div>
+                    <!--resa.statut == 'confirmee' or-->
+                    {% if  resa.statut == 'checkin' or resa.statut == 'checkout' %}
+                    <div class="mt-2 p-2 bg-light rounded">
+                        <small class="text-muted">Chambre N°:</small>
+                        <strong class="ms-2">{{ resa.chambre.numero }}</strong>
+                        (Étage {{ resa.chambre.etage }})
+                    </div>
+                    {% endif %}
+                    <div class="mt-2">
+                        <span class="text-muted small">Total:</span>
+                        <strong class="ms-2">{{ resa.montant_total|floatformat:0 }} MRU</strong>
+                        {% if resa.montant_paye > 0 %}
+                        <span class="text-success small ms-2">({{ resa.montant_paye|floatformat:0 }} MRU payé)</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent d-flex gap-2">
+                    {% with token=resa.pk|resa_token:client.pk %}
+                    <a href="{% url 'client:detail_reservation' token %}" class="btn btn-outline-primary btn-sm flex-grow-1">
+                        <i class="fas fa-eye me-1"></i>Détails
+                    </a>
+                    {% if resa.statut in 'en_attente,confirmee' %}
+                    <a href="{% url 'client:annuler_reservation' token %}" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-ban me-1"></i>Annuler
+                    </a>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

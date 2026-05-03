@@ -1,0 +1,98 @@
+{% extends 'admin/base.html' %}
+{% block title %}Utilisateurs{% endblock %}
+{% block page_title %}Gestion des Utilisateurs{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div></div>
+    <a href="{% url 'users:create' %}" class="btn btn-primary">
+        <i class="fas fa-user-plus me-2"></i>Nouvel Utilisateur
+    </a>
+</div>
+
+<!-- Filtres -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-4">
+                <input type="text" name="q" class="form-control form-control-sm" placeholder="Nom, prénom, email..." value="{{ search }}">
+            </div>
+            <div class="col-md-3">
+                <select name="role" class="form-select form-select-sm">
+                    <option value="">Tous les rôles</option>
+                    {% for val, label in role_choices %}
+                    <option value="{{ val }}" {% if role_filter == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if current_user.role == 'admin' %}
+            <div class="col-md-3">
+                <select name="hotel" class="form-select form-select-sm">
+                    <option value="">Tous les hôtels</option>
+                    {% for h in hotels %}
+                    <option value="{{ h.pk }}" {% if hotel_filter == h.pk|stringformat:"s" %}selected{% endif %}>{{ h.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary btn-sm w-100">
+                    <i class="fas fa-search me-1"></i>Filtrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-white py-3">
+        <span class="fw-semibold">{{ users|length }} utilisateur(s)</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nom</th>
+                        <th>Email</th>
+                        <th>Rôle</th>
+                        <th>Hôtel</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td class="fw-semibold">{{ u.prenom }} {{ u.nom }}</td>
+                        <td class="text-muted">{{ u.email }}</td>
+                        <td>
+                            <span class="badge bg-primary">{{ u.get_role_display }}</span>
+                        </td>
+                        <td>{{ u.hotel.nom|default:'—' }}</td>
+                        <td>
+                            {% if u.statut %}
+                            <span class="badge bg-success">Actif</span>
+                            {% else %}
+                            <span class="badge bg-danger">Désactivé</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'users:edit' u.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'users:toggle_status' u.pk %}" class="btn btn-sm {% if u.statut %}btn-outline-warning{% else %}btn-outline-success{% endif %}"
+                               onclick="return confirm('{% if u.statut %}Désactiver{% else %}Activer{% endif %} cet utilisateur?')">
+                                <i class="fas fa-{% if u.statut %}ban{% else %}check{% endif %}"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted py-4">Aucun utilisateur trouvé</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'admin/base.html' %}
+{% block title %}Supprimer Type{% endblock %}
+{% block page_title %}Supprimer un Type de Chambre{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-lg-5">
+<div class="card border-danger">
+    <div class="card-header bg-danger text-white">
+        <i class="fas fa-exclamation-triangle me-2"></i>Confirmation de suppression
+    </div>
+    <div class="card-body text-center py-4">
+        <i class="fas fa-layer-group fa-3x text-danger mb-3"></i>
+        <h5>Supprimer le type "{{ tc.libelle }}" ?</h5>
+        <p class="text-muted">{{ tc.capacite }} personnes — {{ tc.prix_nuit }} MRU/nuit</p>
+        <p class="text-danger"><small>Cette action est irréversible.</small></p>
+        <form method="post" class="d-flex gap-2 justify-content-center mt-3">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash me-2"></i>Supprimer
+            </button>
+            <a href="{% url 'chambre:type_list' %}" class="btn btn-outline-secondary">Annuler</a>
+        </form>
+    </div>
+</div>
+</div>
+</div>
+{% endblock %}

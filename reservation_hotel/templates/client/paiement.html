@@ -1,0 +1,180 @@
+{% extends 'client/base.html' %}
+{% block title %}Paiement{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row g-4 justify-content-center">
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-credit-card me-2"></i>Paiement de la réservation</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>Réservation en attente</strong><br>
+                        Montant à payer: <strong class="fs-5">{{ resa.montant_total|floatformat:2 }} MRU</strong>
+                    </div>
+
+                    <!-- Sélection mode de paiement -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold fs-6">Choisissez votre mode de paiement</label>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="form-check payment-option border rounded p-3 cursor-pointer" id="opt-bankily" onclick="selectPayment('bankily')">
+                                    <input class="form-check-input" type="radio" name="payment_mode" id="bankily" value="bankily">
+                                    <label class="form-check-label w-100" for="bankily">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fas fa-mobile-alt fa-2x text-success"></i>
+                                            <div>
+                                                <div class="fw-bold">Bankily</div>
+                                                <small class="text-muted">Mobile Money</small>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-check payment-option border rounded p-3 opacity-75" id="opt-visa" onclick="selectPayment('visa')" style="cursor:pointer;">
+                                    <input class="form-check-input" type="radio" name="payment_mode" id="visa_payment" value="visa">
+                                    <label class="form-check-label w-100" for="visa_payment">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fas fa-credit-card fa-2x text-secondary"></i>
+                                            <div>
+                                                <div class="fw-bold text-muted">Visa / MasterCard</div>
+                                                <small class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>Indisponible</small>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Formulaire Bankily -->
+                    <div id="form-bankily" class="d-none">
+                        <div class="alert alert-success">
+                            <i class="fas fa-mobile-alt me-2"></i>
+                            <strong>Numéro Bankily de l'hôtel: {{ hotel.num_bankily }}</strong><br>
+                            Envoyez {{ resa.montant_total|floatformat:2 }} MRU à ce numéro, puis cliquez sur "Confirmer".
+                            <br><small>Un agent hôtelier validera votre paiement.</small>
+                        </div>
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="mode" value="bankily">
+                            <button type="submit" class="btn btn-success w-100 btn-lg">
+                                <i class="fas fa-check me-2"></i>J'ai effectué le virement Bankily
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Formulaire Visa -->
+                    <div id="form-visa" class="d-none">
+                        <!-- VISA PAYMENT DISABLED - Service temporairement indisponible -->
+                        <div class="alert alert-warning d-flex align-items-center gap-3">
+                            <i class="fas fa-tools fa-2x text-warning"></i>
+                            <div>
+                                <strong>Service Visa / MasterCard temporairement indisponible</strong><br>
+                                <small class="text-muted">Ce mode de paiement sera disponible prochainement. Veuillez utiliser <strong>Bankily</strong> pour procéder au paiement.</small>
+                            </div>
+                        </div>
+                        <!-- VISA FORM COMMENTED OUT
+                        <form method="post" id="visa-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="mode" value="visa">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Numéro de carte *</label>
+                                <input type="text" name="numero_carte" id="card-number" class="form-control form-control-lg"
+                                       placeholder="1234 5678 9012 3456" maxlength="19" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Titulaire de la carte *</label>
+                                <input type="text" name="titulaire" class="form-control" placeholder="PRENOM NOM" required>
+                            </div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-6">
+                                    <label class="form-label fw-semibold">Date d'expiration *</label>
+                                    <input type="text" name="expiration" class="form-control" placeholder="MM/AA" maxlength="5" required>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label fw-semibold">CVV *</label>
+                                    <input type="password" name="cvv" class="form-control" placeholder="123" maxlength="4" required>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 mb-3 text-muted small">
+                                <i class="fas fa-lock text-success"></i>
+                                Paiement sécurisé SSL
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 btn-lg">
+                                <i class="fas fa-lock me-2"></i>Payer {{ resa.montant_total|floatformat:2 }} MRU
+                            </button>
+                        </form>
+                        END VISA FORM -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Récap -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-light py-3">
+                    <h6 class="mb-0 fw-bold">Votre réservation</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2"><span class="text-muted">Type:</span> <strong>{{ resa.chambre.type_chambre.libelle }}</strong></div>
+                    <div class="mb-2"><span class="text-muted">Hôtel:</span> <strong>{{ hotel.nom }}</strong></div>
+                    <div class="mb-2"><span class="text-muted">Arrivée:</span> <strong>{{ resa.date_arrivee|date:"d/m/Y" }}</strong></div>
+                    <div class="mb-2"><span class="text-muted">Départ:</span> <strong>{{ resa.date_depart|date:"d/m/Y" }}</strong></div>
+                    <div class="mb-2"><span class="text-muted">Durée:</span> <strong>{{ resa.nombre_nuits }} nuit(s)</strong></div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <strong>Total</strong>
+                        <strong class="text-primary fs-5">{{ resa.montant_total|floatformat:2 }} MRU</strong>
+                    </div>
+                    <div class="mt-3 small text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Le numéro de chambre vous sera révélé après confirmation du paiement.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function selectPayment(mode) {
+    document.getElementById('form-bankily').classList.add('d-none');
+    document.getElementById('form-visa').classList.add('d-none');
+    document.getElementById('opt-bankily').classList.remove('border-success', 'bg-success', 'bg-opacity-10');
+    document.getElementById('opt-visa').classList.remove('border-primary', 'bg-primary', 'bg-opacity-10');
+
+    if (mode === 'bankily') {
+        document.getElementById('form-bankily').classList.remove('d-none');
+        document.getElementById('opt-bankily').classList.add('border-success', 'bg-success', 'bg-opacity-10');
+        document.getElementById('bankily').checked = true;
+    } else {
+        document.getElementById('form-visa').classList.remove('d-none');
+        document.getElementById('opt-visa').classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
+        document.getElementById('visa_payment').checked = true;
+    }
+}
+
+// Format carte visa
+document.getElementById('card-number')?.addEventListener('input', function() {
+    let v = this.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    let matches = v.match(/\d{4,16}/g);
+    let match = matches && matches[0] || '';
+    let parts = [];
+    for (let i = 0; i < match.length; i += 4) { parts.push(match.substring(i, i + 4)); }
+    this.value = parts.length ? parts.join(' ') : v;
+});
+
+// Format expiration
+document.querySelector('input[name="expiration"]')?.addEventListener('input', function() {
+    let v = this.value.replace(/\D/g, '');
+    if (v.length >= 2) { this.value = v.substring(0, 2) + '/' + v.substring(2); }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends 'admin/base.html' %}
+{% block title %}Équipements{% endblock %}
+{% block page_title %}Gestion des Équipements{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-plus me-2"></i>Ajouter un équipement
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <input type="text" name="nom" class="form-control" placeholder="Nom de l'équipement..." required>
+                        <button type="submit" class="btn btn-primary">Ajouter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-header bg-white">
+                <span class="fw-semibold">{{ equips|length }} équipement(s)</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr><th>Nom</th><th>Types l'utilisant</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for eq in equips %}
+                            <tr>
+                                <td class="fw-semibold">{{ eq.nom }}</td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ eq.typechambre_set.count }} types</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="2" class="text-center text-muted py-3">Aucun équipement</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

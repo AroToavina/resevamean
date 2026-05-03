@@ -1,0 +1,124 @@
+{% extends 'client/base.html' %}
+{% block title %}Recherche{% endblock %}
+
+{% block extra_css %}
+<style>
+.search-wrap {
+    background:
+        linear-gradient(150deg, rgba(26,60,94,0.94) 0%, rgba(45,90,138,0.82) 100%),
+        url('https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1920&q=80') center/cover no-repeat;
+    padding: 50px 0 40px;
+    border-bottom: 2px solid var(--gold);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="search-wrap">
+    <div class="container">
+        <div class="text-center mb-4 fade-up">
+            <span class="hero-subtitle">Trouvez votre séjour idéal</span>
+            <h2 style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:2.2rem;color:white;" class="mt-1">Rechercher une chambre</h2>
+        </div>
+        <div class="search-card p-4 fade-up fade-up-1">
+            <form method="get" action="{% url 'client:recherche' %}">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">Ville</label>
+                        <select name="ville" class="form-select" required>
+                            <option value="">Toutes les villes</option>
+                            {% for v in villes %}
+                            <option value="{{ v.pk }}" {% if ville_id == v.pk|stringformat:"i" %}selected{% endif %}>{{ v.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Arrivée</label>
+                        <input type="date" name="date_arrivee" class="form-control" value="{{ date_arrivee }}" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Départ</label>
+                        <input type="date" name="date_depart" class="form-control" value="{{ date_depart }}" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Adultes</label>
+                        <input type="number" name="adultes" class="form-control" value="{{ adultes }}" min="1" max="10">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Enfants</label>
+                        <input type="number" name="enfants" class="form-control" value="{{ enfants }}" min="0" max="10">
+                    </div>
+                    <div class="col-md-1">
+                        <button type="submit" class="btn btn-accent w-100" style="padding:0.6rem;">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+
+    {% if erreur %}
+    <div class="alert alert-danger fade-up"><i class="fas fa-exclamation-circle me-2"></i>{{ erreur }}</div>
+    {% endif %}
+
+    {% if recherche_active and not erreur %}
+    <div class="d-flex justify-content-between align-items-end mb-4 fade-up">
+        <div>
+            <span class="section-label">Résultats</span>
+            <h3 class="section-title mb-0">
+                <em style="font-style:italic;">{{ ville.nom }}</em>
+                <span style="font-size:1rem;font-family:'Jost',sans-serif;font-weight:300;color:var(--text-muted);margin-left:0.5rem;">
+                    {{ date_arrivee }} → {{ date_depart }} · {{ adultes }} pers.{% if enfants %} + {{ enfants }} enf.{% endif %}
+                </span>
+            </h3>
+        </div>
+        {% if chambres_disponibles %}
+        <span class="badge bg-success" style="font-size:0.82rem;padding:0.5em 1em;border-radius:4px;">
+            {{ chambres_disponibles|length }} chambre{{ chambres_disponibles|length|pluralize }}
+        </span>
+        {% endif %}
+    </div>
+    {% if chambres_disponibles %}
+    {% include 'client/_chambres_grid.html' with chambres=chambres_disponibles show_reserve=True %}
+    {% else %}
+    <div class="text-center py-5 fade-up">
+        <i class="fas fa-bed fa-3x mb-4 d-block" style="color:#c0ccd8;"></i>
+        <h5 style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:1.5rem;">Aucune chambre disponible</h5>
+        <p class="text-muted">Essayez d'autres dates ou réduisez le nombre de personnes</p>
+    </div>
+    {% endif %}
+
+    {% else %}
+    {% if chambres_vitrine %}
+    <div class="text-center mb-5 fade-up">
+        <span class="section-label">Disponible dès maintenant</span>
+        <h3 class="section-title">Nos chambres en vedette</h3>
+        <hr class="gold-divider" style="max-width:120px;margin:1rem auto;">
+    </div>
+    {% include 'client/_chambres_grid.html' with chambres=chambres_vitrine show_reserve=False %}
+    {% endif %}
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const today = new Date();
+const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+const tomorrowStr = tomorrow.toISOString().split('T')[0];
+document.querySelectorAll('input[name="date_arrivee"]').forEach(i => { i.min = tomorrowStr; if (i.value && i.value < tomorrowStr) i.value = tomorrowStr; });
+document.querySelector('input[name="date_arrivee"]').addEventListener('change', function() {
+    const dep = document.querySelector('input[name="date_depart"]');
+    if (dep.value < this.value) {
+        const d = new Date(this.value); d.setDate(d.getDate()+1);
+        dep.value = d.toISOString().split('T')[0];
+    }
+    dep.min = this.value;
+});
+</script>
+{% endblock %}

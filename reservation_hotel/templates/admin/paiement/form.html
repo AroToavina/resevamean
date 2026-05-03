@@ -1,0 +1,51 @@
+{% extends 'admin/base.html' %}
+{% block title %}Ajouter Paiement{% endblock %}
+{% block page_title %}Ajouter un Paiement{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-lg-6">
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <i class="fas fa-credit-card me-2"></i>Ajouter un Paiement
+    </div>
+    <div class="card-body">
+        <!-- Info réservation -->
+        <div class="alert alert-info mb-4">
+            <strong>Réservation #{{ resa.pk }}</strong> — {{ resa.client }}<br>
+            <small>Montant total: <strong>{{ resa.montant_total }} MRU</strong> | 
+            Déjà payé: <strong>{{ resa.montant_paye }} MRU</strong> |
+            Restant: <strong class="text-danger">{{ montant_restant }} MRU</strong></small>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Montant (MRU) *</label>
+                <input type="number" name="montant" class="form-control" value="{{ montant_restant }}" 
+                       min="0.01" step="0.01" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Mode de paiement</label>
+                <select name="mode" class="form-select">
+                    {% for val, label in modes %}
+                    <option value="{{ val }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Notes</label>
+                <textarea name="notes" class="form-control" rows="2" placeholder="Remarques..."></textarea>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-check me-2"></i>Enregistrer le paiement
+                </button>
+                <a href="{% url 'reservation:detail' resa.pk %}" class="btn btn-outline-secondary">Annuler</a>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+</div>
+{% endblock %}

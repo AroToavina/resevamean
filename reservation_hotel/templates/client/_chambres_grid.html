@@ -1,0 +1,202 @@
+<div class="row g-4">
+    {% for chambre in chambres %}
+    <div class="col-md-6 col-lg-4 fade-up" style="animation-delay:{{ forloop.counter0 }}00ms">
+        <div class="card chambre-card h-100">
+
+            <!-- Image -->
+            <div class="card-img-wrap">
+                {% if chambre.image %}
+                <img src="{{ chambre.image.url }}" alt="Chambre {{ chambre.numero }}">
+                {% elif chambre.type_chambre.image %}
+                <img src="{{ chambre.type_chambre.image.url }}" alt="{{ chambre.type_chambre.libelle }}">
+                {% else %}
+                <div style="height:200px;background:linear-gradient(135deg,var(--bg-accent),#dde6f0);display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-bed fa-3x" style="color:#c0ccd8;"></i>
+                </div>
+                {% endif %}
+                <!-- Overlay badges -->
+                <div style="position:absolute;top:12px;left:12px;"><span class="badge-type">{{ chambre.type_chambre.libelle }}</span></div>
+                <div style="position:absolute;top:12px;right:12px;"><span class="badge-cap"><i class="fas fa-users me-1" style="font-size:0.62rem;"></i>{{ chambre.type_chambre.capacite }} pers.</span></div>
+            </div>
+
+            <div class="card-body p-4">
+                <!-- Hôtel -->
+                <div class="mb-3">
+                    <div style="font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:2px;">{{ chambre.hotel.nom }}</div>
+                    {% if not recherche_active %}
+                    <div style="font-size:0.78rem;color:var(--text-muted);"><i class="fas fa-map-marker-alt me-1" style="font-size:0.63rem;"></i>{{ chambre.hotel.ville.nom }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Prix -->
+                <div class="d-flex align-items-baseline gap-2 mb-3">
+                    <span class="price-main">{{ chambre.type_chambre.prix_nuit }}</span>
+                    <span class="price-unit">MRU / nuit</span>
+                </div>
+
+                <!-- Total si recherche active -->
+                {% if show_reserve and nombre_nuits %}
+                <div class="price-total mb-3">
+                    <i class="fas fa-moon me-2" style="font-size:0.75rem;color:var(--gold);"></i>
+                    {{ nombre_nuits }} nuit{{ nombre_nuits|pluralize }} —
+                    <strong>{% widthratio chambre.type_chambre.prix_nuit 1 nombre_nuits %} MRU</strong>
+                </div>
+                {% endif %}
+
+                <!-- Mini formulaire vitrine -->
+                {% if not show_reserve %}
+                <div id="form-{{ chambre.pk }}" style="display:none;" class="mb-3">
+                    <hr class="gold-divider" style="margin:0.75rem 0;">
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label style="font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);font-weight:600;">Arrivée</label>
+                            <input type="date" id="arr-{{ chambre.pk }}" class="form-control form-control-sm" style="border-radius:4px;">
+                        </div>
+                        <div class="col-6">
+                            <label style="font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);font-weight:600;">Départ</label>
+                            <input type="date" id="dep-{{ chambre.pk }}" class="form-control form-control-sm" style="border-radius:4px;">
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label style="font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);font-weight:600;">Adultes</label>
+                            <input type="number" id="adu-{{ chambre.pk }}" class="form-control form-control-sm" style="border-radius:4px;" value="1" min="1" max="10">
+                        </div>
+                        <div class="col-6">
+                            <label style="font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);font-weight:600;">Enfants</label>
+                            <input type="number" id="enf-{{ chambre.pk }}" class="form-control form-control-sm" style="border-radius:4px;" value="0" min="0">
+                        </div>
+                    </div>
+                    <div id="total-{{ chambre.pk }}" class="price-total" style="display:none;"></div>
+                </div>
+                {% endif %}
+
+                <!-- Équipements -->
+                {% if chambre.type_chambre.equipements.all %}
+                <div class="mb-2" style="display:flex;flex-wrap:wrap;gap:5px;">
+                    {% for equip in chambre.type_chambre.equipements.all|slice:":4" %}
+                    <span style="font-size:0.68rem;background:var(--bg-accent);color:var(--text-muted);padding:3px 8px;border-radius:3px;border:1px solid #dde6f0;">{{ equip.nom }}</span>
+                    {% endfor %}
+                    {% if chambre.type_chambre.equipements.count > 4 %}
+                    <span style="font-size:0.68rem;color:var(--text-muted);">+{{ chambre.type_chambre.equipements.count|add:"-4" }}</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if chambre.type_chambre.description %}
+                <p style="font-size:0.83rem;color:var(--text-muted);line-height:1.55;margin-bottom:0;">{{ chambre.type_chambre.description|truncatewords:18 }}</p>
+                {% endif %}
+            </div>
+
+            <div class="card-footer bg-transparent p-3" style="border-top:1px solid #e8eef4;">
+                {% if show_reserve %}
+                <a href="{% url 'client:reserver' %}?chambre={{ chambre.pk }}&date_arrivee={{ date_arrivee }}&date_depart={{ date_depart }}&adultes={{ adultes }}&enfants={{ enfants }}"
+                   class="btn btn-accent w-100">
+                    <i class="fas fa-calendar-plus me-2"></i>Réserver cette chambre
+                </a>
+                {% else %}
+                <button type="button" class="btn btn-accent w-100"
+                        id="toggle-{{ chambre.pk }}"
+                        data-chambre="{{ chambre.pk }}"
+                        data-prix="{{ chambre.type_chambre.prix_nuit }}"
+                        data-capacite="{{ chambre.type_chambre.capacite }}"
+                        onclick="toggleVitrine({{ chambre.pk }})">>
+                    <i class="fas fa-calendar-plus me-2"></i>Choisir mes dates
+                </button>
+                <a href="#" class="btn btn-primary-navy w-100 d-none" id="reserver-{{ chambre.pk }}">
+                    <i class="fas fa-arrow-right me-2"></i>Réserver maintenant
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if not show_reserve %}
+<script>
+(function(){
+    const today = new Date(); today.setHours(0,0,0,0);
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    window.toggleVitrine = function(id) {
+        const form = document.getElementById('form-'+id);
+        const visible = form.style.display !== 'none';
+        if (visible) {
+            form.style.display = 'none';
+            document.getElementById('toggle-'+id).classList.remove('d-none');
+            document.getElementById('reserver-'+id).classList.add('d-none');
+        } else {
+            form.style.display = 'block';
+            const arr = document.getElementById('arr-'+id);
+            const dep = document.getElementById('dep-'+id);
+            arr.min = dep.min = tomorrowStr;
+            if (!arr.value || arr.value < tomorrowStr) {
+                arr.value = tomorrowStr;
+                const t = new Date(tomorrow); t.setDate(t.getDate()+1);
+                dep.value = t.toISOString().split('T')[0];
+                updateTotal(id);
+            }
+            arr.focus();
+        }
+    };
+    function updateTotal(id) {
+        const arr  = document.getElementById('arr-'+id).value;
+        const dep  = document.getElementById('dep-'+id).value;
+        const adu  = parseInt(document.getElementById('adu-'+id).value) || 1;
+        const enf  = parseInt(document.getElementById('enf-'+id).value) || 0;
+        const prix = document.getElementById('toggle-'+id).dataset.prix;
+        const cap  = parseInt(document.getElementById('toggle-'+id).dataset.capacite) || 99;
+        const totalEl  = document.getElementById('total-'+id);
+        const reserBtn = document.getElementById('reserver-'+id);
+        const togBtn   = document.getElementById('toggle-'+id);
+        const totalPersonnes = adu + enf;
+        if (!arr || !dep) { totalEl.style.display='none'; return; }
+        // Validate 24h minimum
+        const today = new Date(); today.setHours(0,0,0,0);
+        const arrDate = new Date(arr);
+        if (arrDate <= today) {
+            totalEl.innerHTML = '<span class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>Arrivée minimum demain (réservation 24h à l\'avance)</span>';
+            totalEl.style.display = 'block';
+            reserBtn.classList.add('d-none');
+            togBtn.classList.remove('d-none');
+            return;
+        }
+        // Validate capacity
+        if (totalPersonnes > cap) {
+            totalEl.innerHTML = '<span class="text-danger"><i class="fas fa-users me-1"></i>Trop de personnes (capacité max: '+cap+')</span>';
+            totalEl.style.display = 'block';
+            reserBtn.classList.add('d-none');
+            togBtn.classList.remove('d-none');
+            return;
+        }
+        const nuits = Math.max(Math.round((new Date(dep)-new Date(arr))/86400000),1);
+        totalEl.innerHTML = '<i class="fas fa-moon me-1" style="font-size:0.72rem;color:var(--gold);"></i>'
+            + nuits + ' nuit'+(nuits>1?'s':'')+' — <strong>'+(parseFloat(prix)*nuits).toFixed(0)+' MRU</strong>';
+        totalEl.style.display = 'block';
+        reserBtn.href = '/client/reserver/?chambre='+id+'&date_arrivee='+arr+'&date_depart='+dep+'&adultes='+adu+'&enfants='+enf;
+        reserBtn.classList.remove('d-none');
+        togBtn.classList.add('d-none');
+    }
+    document.addEventListener('DOMContentLoaded', function(){
+        document.querySelectorAll('[id^="arr-"]').forEach(function(inp){
+            const id = inp.id.replace('arr-','');
+            inp.min = tomorrowStr;
+            inp.addEventListener('change', function(){
+                const dep = document.getElementById('dep-'+id);
+                dep.min = inp.value;
+                if (dep.value < inp.value) {
+                    const d = new Date(inp.value); d.setDate(d.getDate()+1);
+                    dep.value = d.toISOString().split('T')[0];
+                }
+                updateTotal(id);
+            });
+            ['dep-','adu-','enf-'].forEach(function(p){
+                const el = document.getElementById(p+id);
+                if (el) el.addEventListener('change', function(){ updateTotal(id); });
+            });
+        });
+    });
+})();
+</script>
+{% endif %}

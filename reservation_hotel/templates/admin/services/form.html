@@ -1,0 +1,55 @@
+{% extends 'admin/base.html' %}
+{% block title %}{{ action }} Service{% endblock %}
+{% block page_title %}{{ action }} un Service{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-lg-6">
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <i class="fas fa-concierge-bell me-2"></i>{{ action }} un Service
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Nom du service *</label>
+                <input type="text" name="nom_service" class="form-control" value="{{ service.nom_service|default:'' }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Catégorie</label>
+                <select name="categorie" class="form-select">
+                    {% for val, label in categorie_choices %}
+                    <option value="{{ val }}" {% if service.categorie == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Prix (MRU) *</label>
+                <input type="number" name="prix" class="form-control" value="{{ service.prix|default:'' }}" min="0" step="0.01" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Description</label>
+                <textarea name="description" class="form-control" rows="3">{{ service.description|default:'' }}</textarea>
+            </div>
+            {% if service %}
+            <div class="mb-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="actif" id="actif"
+                           {% if service.actif %}checked{% endif %}>
+                    <label class="form-check-label" for="actif">Service actif</label>
+                </div>
+            </div>
+            {% endif %}
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>{{ action }}
+                </button>
+                <a href="{% url 'services:list' %}" class="btn btn-outline-secondary">Annuler</a>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+</div>
+{% endblock %}

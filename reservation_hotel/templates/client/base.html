@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}HotelManager{% endblock %} | Réservations</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold:       #c9a84c;
+            --gold-light: #e8c97a;
+            --gold-dark:  #9a7530;
+            --navy:       #1a3c5e;
+            --navy-mid:   #2d5a8a;
+            --text:       #1e2a36;
+            --text-muted: #7a8a96;
+            --bg:         #ffffff;
+            --bg-soft:    #f8fafc;
+            --bg-accent:  #f0f5fa;
+            --border:     rgba(201,168,76,0.2);
+        }
+
+        * { box-sizing: border-box; }
+
+        /* Structure pour footer fixe en bas */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Jost', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        main {
+            flex: 1 0 auto;
+        }
+
+        /* Subtle background pattern */
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image:
+                radial-gradient(ellipse at 15% 10%, rgba(26,60,94,0.04) 0%, transparent 55%),
+                radial-gradient(ellipse at 85% 90%, rgba(201,168,76,0.05) 0%, transparent 55%),
+                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23c9a84c' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            pointer-events: none; z-index: 0;
+        }
+        body > * { position: relative; z-index: 1; }
+
+        /* ── Navbar ── */
+        .navbar {
+            background: var(--navy);
+            border-bottom: 2px solid var(--gold);
+            padding: 0.85rem 0;
+            box-shadow: 0 2px 20px rgba(26,60,94,0.15);
+        }
+        .navbar-brand {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.55rem; font-weight: 600;
+            color: white !important;
+            letter-spacing: 0.04em;
+        }
+        .navbar-brand i { color: var(--gold); }
+        .navbar .nav-link {
+            color: rgba(255,255,255,0.82) !important;
+            font-size: 0.82rem; font-weight: 500;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            transition: color 0.2s;
+        }
+        .navbar .nav-link:hover { color: var(--gold-light) !important; }
+        .navbar .nav-link.btn-nav {
+            border: 1px solid rgba(201,168,76,0.5);
+            padding: 0.38rem 1rem;
+            border-radius: 4px;
+            color: var(--gold-light) !important;
+        }
+        .navbar .nav-link.btn-nav:hover {
+            background: var(--gold);
+            color: var(--navy) !important;
+            border-color: var(--gold);
+        }
+
+        /* ── Hero ── */
+        .hero {
+            background:
+                linear-gradient(150deg, rgba(26,60,94,0.92) 0%, rgba(45,90,138,0.78) 100%),
+                url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1920&q=80') center/cover no-repeat;
+            color: white;
+            padding: 100px 0 85px;
+            position: relative;
+        }
+        .hero::after {
+            content: '';
+            position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+        .hero-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(2.4rem, 5vw, 4rem);
+            font-weight: 300; line-height: 1.15;
+        }
+        .hero-title em { font-style: italic; color: var(--gold-light); }
+        .hero-subtitle {
+            font-size: 0.82rem; letter-spacing: 0.2em;
+            text-transform: uppercase; color: rgba(201,168,76,0.85);
+        }
+
+        /* ── Search card ── */
+        .search-card {
+            background: white;
+            border: 1px solid rgba(201,168,76,0.25);
+            border-top: 3px solid var(--gold);
+            border-radius: 4px;
+            box-shadow: 0 8px 40px rgba(26,60,94,0.18);
+        }
+        .search-card .form-label {
+            font-size: 0.72rem; letter-spacing: 0.14em;
+            text-transform: uppercase; color: var(--text-muted);
+            font-weight: 600; margin-bottom: 0.35rem;
+        }
+        .search-card .form-control,
+        .search-card .form-select {
+            border: 1px solid #dde4ea; border-radius: 4px;
+            font-size: 0.9rem; color: var(--text);
+            background: var(--bg-soft);
+        }
+        .search-card .form-control:focus,
+        .search-card .form-select:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+        }
+
+        /* ── Buttons ── */
+        .btn-accent {
+            background: var(--gold); color: var(--navy);
+            border: none; border-radius: 4px;
+            font-size: 0.8rem; font-weight: 700;
+            letter-spacing: 0.12em; text-transform: uppercase;
+            padding: 0.65rem 1.8rem;
+            transition: all 0.22s;
+            box-shadow: 0 3px 12px rgba(201,168,76,0.3);
+        }
+        .btn-accent:hover {
+            background: var(--gold-light); color: var(--navy);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(201,168,76,0.4);
+        }
+        .btn-outline-accent {
+            background: transparent;
+            border: 2px solid var(--gold); color: var(--gold-dark);
+            border-radius: 4px; font-size: 0.8rem;
+            font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+            padding: 0.55rem 1.4rem; transition: all 0.2s;
+        }
+        .btn-outline-accent:hover {
+            background: var(--gold); color: var(--navy);
+        }
+        .btn-primary-navy {
+            background: var(--navy); color: white;
+            border: none; border-radius: 4px;
+            font-size: 0.8rem; font-weight: 600;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            padding: 0.6rem 1.6rem; transition: all 0.2s;
+        }
+        .btn-primary-navy:hover { background: var(--navy-mid); color: white; }
+
+        /* ── Cards ── */
+        .card {
+            border: 1px solid #e8eef4;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 2px 16px rgba(26,60,94,0.07);
+            transition: box-shadow 0.3s, transform 0.3s;
+        }
+        .card:hover { box-shadow: 0 8px 32px rgba(26,60,94,0.13); }
+        .chambre-card:hover { transform: translateY(-4px); }
+        .chambre-card .card-img-wrap { overflow: hidden; border-radius: 8px 8px 0 0; height: 200px; }
+        .chambre-card .card-img-wrap img { width:100%; height:100%; object-fit:cover; transition: transform 0.5s; }
+        .chambre-card:hover .card-img-wrap img { transform: scale(1.04); }
+
+        /* ── Badges ── */
+        .badge-type {
+            background: var(--navy); color: white;
+            font-size: 0.68rem; letter-spacing: 0.09em;
+            text-transform: uppercase; font-weight: 600;
+            padding: 0.3em 0.75em; border-radius: 3px;
+        }
+        .badge-cap {
+            background: rgba(201,168,76,0.12);
+            border: 1px solid rgba(201,168,76,0.35);
+            color: var(--gold-dark);
+            font-size: 0.68rem; font-weight: 600;
+            padding: 0.3em 0.75em; border-radius: 3px;
+        }
+
+        /* ── Price ── */
+        .price-main {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.8rem; font-weight: 600;
+            color: var(--navy); line-height: 1;
+        }
+        .price-unit { font-size: 0.8rem; color: var(--text-muted); }
+        .price-total {
+            background: linear-gradient(135deg, rgba(26,60,94,0.06), rgba(201,168,76,0.06));
+            border: 1px solid rgba(201,168,76,0.2);
+            border-radius: 4px; padding: 0.5rem 0.85rem;
+            font-weight: 600; color: var(--navy); font-size: 0.88rem;
+        }
+
+        /* ── Gold divider ── */
+        .gold-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            border: none; margin: 1.5rem 0; opacity: 0.5;
+        }
+
+        /* ── Section ── */
+        .section-label {
+            display: block; font-size: 0.72rem;
+            letter-spacing: 0.22em; text-transform: uppercase;
+            color: var(--gold); font-weight: 600; margin-bottom: 0.3rem;
+        }
+        .section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 300; font-size: 2rem; color: var(--text);
+        }
+
+        /* ── Feature icon ── */
+        .feature-icon {
+            width: 56px; height: 56px;
+            background: var(--bg-accent);
+            border: 1px solid rgba(201,168,76,0.25);
+            border-radius: 4px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1rem;
+            color: var(--navy); font-size: 1.3rem;
+        }
+
+        /* ── Stars ── */
+        .stars-display { color: var(--gold); letter-spacing: 2px; }
+        .stars-display .empty { color: #d0d8e0; }
+
+        /* ── Alert ── */
+        .alert { border-radius: 6px; }
+        .alert-success { border-left: 3px solid var(--gold); background: rgba(201,168,76,0.06); color: var(--gold-dark); border-color: rgba(201,168,76,0.2); }
+
+        /* ── Footer ── */
+        .footer {
+            background: var(--navy);
+            color: rgba(255,255,255,0.55);
+            padding: 40px 0;
+            border-top: 2px solid var(--gold);
+            flex-shrink: 0;
+            width: 100%;
+        }
+        .footer-brand {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem; color: white;
+        }
+        .footer-brand i { color: var(--gold); }
+
+        /* ── Animations ── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .fade-up { animation: fadeUp 0.45s ease both; }
+        .fade-up-1 { animation-delay: 0.1s; }
+        .fade-up-2 { animation-delay: 0.2s; }
+        .fade-up-3 { animation-delay: 0.3s; }
+
+        /* ── Misc ── */
+        .badge-statut { font-size: 0.8rem; padding: 6px 12px; border-radius: 20px; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #c0ccd8; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'client:home' %}">
+            <i class="fas fa-hotel me-2" style="font-size:1rem;"></i>Hotel<em style="font-style:italic;opacity:0.85;">Manager</em>
+        </a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navCollapse">
+            <i class="fas fa-bars" style="color:var(--gold-light);"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="navCollapse">
+            <ul class="navbar-nav ms-auto align-items-center gap-2">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'client:recherche' %}">
+                        <i class="fas fa-search me-1" style="font-size:0.72rem;"></i>Rechercher
+                    </a>
+                </li>
+                {% if current_client %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'client:mes_reservations' %}">
+                        <i class="fas fa-calendar-check me-1" style="font-size:0.72rem;"></i>Mes Réservations
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link btn-nav" href="{% url 'client:logout' %}">
+                        <i class="fas fa-sign-out-alt me-1"></i>Déconnexion
+                    </a>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link btn-nav" href="{% url 'client:login' %}">
+                        <i class="fas fa-user me-1"></i>Mon espace
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<main>
+    {% if messages %}
+    <div class="container mt-3">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+            <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'danger' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="footer">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-4 text-center text-md-start mb-3 mb-md-0">
+                <div class="footer-brand mb-1"><i class="fas fa-hotel me-2"></i>HotelManager</div>
+                <small style="font-size:0.75rem; color: #a0a0a0;">Réservations en ligne</small>
+            </div>
+            
+            <div class="col-md-4 text-center">
+                <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,0.4),transparent);margin-bottom:0.8rem;"></div>
+                <small style="color: #a0a0a0;">&copy; 2026 HotelManager — Tous droits réservés</small>
+            </div>
+            
+            <!-- Contact section avec meilleure lisibilité -->
+            <div class="col-md-4 text-center text-md-end mt-3 mt-md-0">
+                <div class="contact-info">
+                    <!-- Titre Contact avec couleur or plus visible -->
+                    <div class="contact-item mb-2">
+                        <small style="font-size:0.8rem; letter-spacing:0.1em; text-transform:uppercase; font-weight:500; color: #c9a84c;">Contact</small>
+                    </div>
+                    
+                    <!-- Email avec icône et meilleur contraste -->
+                    <div class="contact-item d-flex align-items-center justify-content-center justify-content-md-end gap-2 mb-1">
+                        <i class="fas fa-envelope" style="color: #c9a84c; font-size:0.7rem;"></i>
+                        <small style="font-size:0.75rem; color: #e0e0e0;">contact@hote.mr</small>
+                    </div>
+                    
+                    <!-- Téléphone avec icône et meilleur contraste -->
+                    <div class="contact-item d-flex align-items-center justify-content-center justify-content-md-end gap-2">
+                        <i class="fas fa-phone-alt" style="color: #c9a84c; font-size:0.7rem;"></i>
+                        <small style="font-size:0.75rem; color: #e0e0e0;">+222 44 86 97 80</small>
+                    </div>
+                    
+                    <!-- Optionnel : horaires avec opacité réduite -->
+                    <div class="contact-item mt-2">
+                        <small style="font-size:0.65rem; color: #808080;">24h/24 - 7j/7</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

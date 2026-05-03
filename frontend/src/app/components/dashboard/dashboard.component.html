@@ -1,0 +1,79 @@
+<div class="space-y-4 fade-in">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-5">
+    <div>
+      <span class="text-xs text-uppercase tracking-widest text-gold fw-medium" style="font-size: 11px;">Tableau de Bord</span>
+      <h1 class="font-display display-4 mt-2 mb-1">Bienvenue, {{ currentUser?.nom || 'Admin' }}</h1>
+      <p class="text-muted-foreground small">Gestion en temps réel de la Maison Royale.</p>
+    </div>
+    <div class="badge bg-white text-navy-deep border shadow-sm px-3 py-2 rounded-pill">
+      <i class="bi bi-broadcast text-danger me-2 shadow-sm"></i> Live Update
+    </div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="row g-4 mb-5">
+    <div class="col-sm-6 col-xl-3" *ngFor="let s of stats">
+      <div class="glass-card p-4 h-100">
+        <div class="d-flex justify-content-between align-items-start">
+          <div class="stat-icon-box">
+            <i class="bi" [ngClass]="s.icon"></i>
+          </div>
+        </div>
+        <div class="mt-4 font-display h2 mb-1">{{ s.value }}</div>
+        <div class="text-muted-foreground smallest text-uppercase tracking-wider">{{ s.label }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="glass-card overflow-hidden">
+    <div class="p-4 border-bottom bg-white">
+      <h2 class="font-display h4 mb-1">Réservations récentes</h2>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover m-0">
+        <thead class="bg-light">
+          <tr class="text-muted small text-uppercase tracking-wider">
+            <th class="px-4 py-3 border-0">Client</th>
+            <th class="px-4 py-3 border-0">Chambre</th>
+            <th class="px-4 py-3 border-0">Arrivée</th>
+            <th class="px-4 py-3 border-0">Statut</th>
+            <th class="px-4 py-3 border-0 text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let res of recentReservations" class="align-middle">
+            <td class="px-4 py-3 fw-bold">{{ res.clientId }}</td>
+            <td class="px-4 py-3 text-muted-foreground">
+              <div class="d-flex align-items-center gap-2">
+                <img [src]="res.chambreId?.image || 'assets/hotel-lobby.jpg'" style="width: 30px; height: 30px; object-fit: cover; border-radius: 4px;">
+                <span>#{{ res.chambreId?.numero || '?' }}</span>
+              </div>
+            </td>
+            <td class="px-4 py-3">{{ res.dateArrivee | date:'dd MMM' }}</td>
+            <td class="px-4 py-3">
+              <span class="badge rounded-pill px-3" [ngClass]="res.statut === 'confirmee' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'">
+                {{ res.statut | titlecase }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-end">
+              <div class="d-flex justify-content-end gap-2" *ngIf="res.statut === 'en_attente'">
+                <button (click)="confirmerReservation(res)" class="btn btn-success btn-sm py-1 px-2" title="Confirmer">
+                  <i class="bi bi-check-lg"></i>
+                </button>
+                <button (click)="annulerReservation(res)" class="btn btn-danger btn-sm py-1 px-2" title="Refuser">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<style>
+  .stat-icon-box { width: 42px; height: 42px; background: rgba(45, 49, 58, 0.05); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: #1a1e26; }
+  .font-display { font-family: 'Cormorant Garamond', serif; }
+</style>

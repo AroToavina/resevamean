@@ -1,0 +1,310 @@
+{% extends 'admin/base.html' %}
+{% block title %}Nouvelle Réservation{% endblock %}
+{% block page_title %}Nouvelle Réservation{% endblock %}
+
+{% block extra_css %}
+<style>
+#client-info-section { transition: all 0.3s; }
+.field-locked { background: #f8f9fa !important; color: #495057; }
+.client-badge { font-size: 0.75rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold">
+                    <i class="fas fa-plus-circle me-2 text-primary"></i>Créer une réservation
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post" id="createForm">
+                    {% csrf_token %}
+
+                    <!-- ── ÉTAPE 1 : Email ───────────────────────────── -->
+                    <h6 class="fw-bold mb-3 text-primary border-bottom pb-2">
+                        <span class="badge bg-primary rounded-circle me-2">1</span>Email du client
+                    </h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8">
+                            <label class="form-label">Email <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="email" name="email" id="emailInput"
+                                       class="form-control form-control-lg"
+                                       placeholder="client@example.com" required
+                                       autocomplete="off">
+                                <button type="button" class="btn btn-outline-primary px-3" id="lookupBtn">
+                                    <i class="fas fa-search me-1"></i>Vérifier
+                                </button>
+                            </div>
+                            <div id="emailStatus" class="form-text mt-1"></div>
+                        </div>
+                    </div>
+
+                    <!-- ── ÉTAPE 2 : Infos client (auto-remplies ou saisie) ── -->
+                    <div id="client-info-section" style="display:none;">
+                        <h6 class="fw-bold mb-3 text-primary border-bottom pb-2">
+                            <span class="badge bg-primary rounded-circle me-2">2</span>
+                            Informations client
+                            <span id="clientBadge" class="ms-2"></span>
+                        </h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Nom <span class="text-danger">*</span></label>
+                                <input type="text" name="nom" id="nomInput" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Prénom <span class="text-danger">*</span></label>
+                                <input type="text" name="prenom" id="prenomInput" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Téléphone <span class="text-danger">*</span></label>
+                                <input type="text" name="telephone" id="telephoneInput" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Nationalité</label>
+                                <input type="text" name="nationalite" id="nationaliteInput" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Type d'identité</label>
+                                <select name="type_identite" id="typeIdentiteInput" class="form-select">
+                                    <option value="CNI">CNI</option>
+                                    <option value="PASSEPORT">Passeport</option>
+                                    <option value="PERMIS">Permis</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- ── ÉTAPE 3 : Réservation ─────────────────── -->
+                        <h6 class="fw-bold mb-3 text-primary border-bottom pb-2">
+                            <span class="badge bg-primary rounded-circle me-2">3</span>Détails de la réservation
+                        </h6>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Hôtel <span class="text-danger">*</span></label>
+                                <select name="hotel_id" id="hotelSelect" class="form-select" required>
+                                    <option value="">— Sélectionner —</option>
+                                    {% for h in hotels %}
+                                    <option value="{{ h.pk }}">{{ h.nom }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Arrivée <span class="text-danger">*</span></label>
+                                <input type="datetime-local" name="date_arrivee" id="dateArrivee" class="form-control" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Départ <span class="text-danger">*</span></label>
+                                <input type="datetime-local" name="date_depart" id="dateDepart" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <!-- Chambres disponibles -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-8">
+                                <label class="form-label">Chambre disponible <span class="text-danger">*</span></label>
+                                <select name="chambre" id="chambreSelect" class="form-select" required>
+                                    <option value="">— Sélectionner hôtel + dates d'abord —</option>
+                                </select>
+                                <div id="chambreStatus" class="form-text"></div>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Adultes</label>
+                                <input type="number" name="nbr_adultes" class="form-control" value="1" min="1" max="10">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Enfants</label>
+                                <input type="number" name="nbr_enfants" class="form-control" value="0" min="0">
+                            </div>
+                        </div>
+
+                        <!-- Résumé prix -->
+                        <div id="prixResume" class="alert alert-success d-none mb-4">
+                            <i class="fas fa-calculator me-2"></i>
+                            <span id="prixText"></span>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'reservation:list' %}" class="btn btn-outline-secondary">Annuler</a>
+                            <button type="submit" class="btn btn-primary flex-grow-1">
+                                <i class="fas fa-save me-2"></i>Créer la réservation
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const LOOKUP_URL = "{% url 'reservation:api_client_lookup' %}";
+const CHAMBRES_URL = "{% url 'reservation:api_chambres_disponibles' %}";
+
+const emailInput    = document.getElementById('emailInput');
+const lookupBtn     = document.getElementById('lookupBtn');
+const emailStatus   = document.getElementById('emailStatus');
+const clientSection = document.getElementById('client-info-section');
+const clientBadge   = document.getElementById('clientBadge');
+
+const nomInput          = document.getElementById('nomInput');
+const prenomInput       = document.getElementById('prenomInput');
+const telephoneInput    = document.getElementById('telephoneInput');
+const nationaliteInput  = document.getElementById('nationaliteInput');
+const typeIdentiteInput = document.getElementById('typeIdentiteInput');
+
+const hotelSelect   = document.getElementById('hotelSelect');
+const dateArrivee   = document.getElementById('dateArrivee');
+const dateDepart    = document.getElementById('dateDepart');
+const chambreSelect = document.getElementById('chambreSelect');
+const chambreStatus = document.getElementById('chambreStatus');
+const prixResume    = document.getElementById('prixResume');
+const prixText      = document.getElementById('prixText');
+
+// ── Lookup client par email ──────────────────────────────────
+async function lookupClient() {
+    const email = emailInput.value.trim();
+    if (!email) return;
+
+    lookupBtn.disabled = true;
+    lookupBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Recherche...';
+
+    try {
+        const res = await fetch(`${LOOKUP_URL}?email=${encodeURIComponent(email)}`);
+        const data = await res.json();
+
+        clientSection.style.display = 'block';
+
+        if (data.found) {
+            // Client existant → remplir et verrouiller
+            nomInput.value         = data.nom;
+            prenomInput.value      = data.prenom;
+            telephoneInput.value   = data.telephone;
+            nationaliteInput.value = data.nationalite || '';
+            typeIdentiteInput.value = data.type_identite || 'CNI';
+
+            [nomInput, prenomInput, telephoneInput, nationaliteInput].forEach(f => {
+                f.classList.add('field-locked');
+                f.readOnly = true;
+            });
+            typeIdentiteInput.disabled = true;
+
+            clientBadge.innerHTML = '<span class="badge bg-success client-badge"><i class="fas fa-check me-1"></i>Client existant — informations chargées automatiquement</span>';
+            emailStatus.innerHTML = '<span class="text-success"><i class="fas fa-user-check me-1"></i>Client trouvé dans le système.</span>';
+        } else {
+            // Nouveau client → champs vides et éditables
+            [nomInput, prenomInput, telephoneInput, nationaliteInput].forEach(f => {
+                f.value = '';
+                f.classList.remove('field-locked');
+                f.readOnly = false;
+            });
+            typeIdentiteInput.disabled = false;
+
+            clientBadge.innerHTML = '<span class="badge bg-warning text-dark client-badge"><i class="fas fa-user-plus me-1"></i>Nouveau client — veuillez remplir les informations</span>';
+            emailStatus.innerHTML = '<span class="text-warning"><i class="fas fa-user-plus me-1"></i>Aucun client avec cet email. Remplissez les informations ci-dessous.</span>';
+            nomInput.focus();
+        }
+    } catch (e) {
+        emailStatus.innerHTML = '<span class="text-danger">Erreur de connexion.</span>';
+        clientSection.style.display = 'block';
+    }
+
+    lookupBtn.disabled = false;
+    lookupBtn.innerHTML = '<i class="fas fa-search me-1"></i>Vérifier';
+}
+
+// Déclencher sur clic ou Enter dans l'email
+lookupBtn.addEventListener('click', lookupClient);
+emailInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); lookupClient(); } });
+
+// ── Charger chambres disponibles ────────────────────────────
+async function loadChambres() {
+    const hotelId    = hotelSelect.value;
+    const arrivalVal = dateArrivee.value;
+    const departVal  = dateDepart.value;
+    const nbAdultes  = document.querySelector('[name="nbr_adultes"]').value || 1;
+    const nbEnfants  = document.querySelector('[name="nbr_enfants"]').value || 0;
+
+    if (!hotelId) {
+        chambreSelect.innerHTML = '<option value="">— Sélectionner un hôtel —</option>';
+        hidePrix(); return;
+    }
+
+    chambreSelect.innerHTML = '<option value="">Chargement...</option>';
+    chambreStatus.innerHTML = '';
+
+    const params = new URLSearchParams({
+        hotel_id: hotelId,
+        nb_adultes: nbAdultes,
+        nb_enfants: nbEnfants,
+    });
+    if (arrivalVal && departVal) {
+        params.append('date_arrivee', arrivalVal);
+        params.append('date_depart', departVal);
+    }
+
+    try {
+        const res  = await fetch(`${CHAMBRES_URL}?${params}`);
+        const data = await res.json();
+        const total = parseInt(nbAdultes) + parseInt(nbEnfants);
+
+        if (data.chambres.length === 0) {
+            chambreSelect.innerHTML = '<option value="">Aucune chambre disponible pour ces critères</option>';
+            chambreStatus.innerHTML = `<span class="text-danger"><i class="fas fa-times-circle me-1"></i>Aucune chambre disponible pour ${total} résident(s).</span>`;
+            hidePrix();
+        } else {
+            chambreSelect.innerHTML = '<option value="">— Sélectionner une chambre —</option>';
+            data.chambres.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.label;
+                opt.dataset.prix = c.prix_nuit;
+                chambreSelect.appendChild(opt);
+            });
+            chambreStatus.innerHTML = `<span class="text-success"><i class="fas fa-check-circle me-1"></i>${data.chambres.length} chambre(s) pour ${total} résident(s).</span>`;
+        }
+    } catch(e) {
+        chambreSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+    }
+}
+
+function hidePrix() { prixResume.classList.add('d-none'); }
+
+function updatePrix() {
+    const opt = chambreSelect.options[chambreSelect.selectedIndex];
+    if (!opt || !opt.dataset.prix) { hidePrix(); return; }
+    const arr = dateArrivee.value, dep = dateDepart.value;
+    if (!arr || !dep) { hidePrix(); return; }
+    const nuits = Math.round((new Date(dep) - new Date(arr)) / 86400000);
+    if (nuits <= 0) { hidePrix(); return; }
+    const total = (parseFloat(opt.dataset.prix) * nuits).toFixed(2);
+    prixText.textContent = `${nuits} nuit(s) × ${parseFloat(opt.dataset.prix).toFixed(2)} MRU = Total: ${total} MRU`;
+    prixResume.classList.remove('d-none');
+}
+
+hotelSelect.addEventListener('change', loadChambres);
+dateArrivee.addEventListener('change', () => {
+    if (dateDepart.value && dateDepart.value <= dateArrivee.value) {
+        const d = new Date(dateArrivee.value);
+        d.setDate(d.getDate() + 1);
+        dateDepart.value = d.toISOString().split('T')[0];
+    }
+    loadChambres();
+});
+dateDepart.addEventListener('change', loadChambres);
+chambreSelect.addEventListener('change', updatePrix);
+
+// Recharger les chambres si le nombre de résidents change
+document.querySelector('[name="nbr_adultes"]').addEventListener('change', loadChambres);
+document.querySelector('[name="nbr_enfants"]').addEventListener('change', loadChambres);
+
+// Set min date = today
+const today = new Date().toISOString().split('T')[0];
+dateArrivee.min = today;
+dateDepart.min = today;
+</script>
+{% endblock %}

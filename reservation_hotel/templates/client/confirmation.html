@@ -1,0 +1,39 @@
+{% extends 'client/base.html' %}
+{% block title %}Réservation Confirmée{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <div class="card">
+                <div class="card-body py-5">
+                    <i class="fas fa-check-circle fa-5x text-success mb-4 d-block"></i>
+                    <h3 class="fw-bold text-success">Réservation Confirmée!</h3>
+                    {% if resa %}
+                    <p class="text-muted mb-3">
+                        {{ resa.chambre.type_chambre.libelle }} — {{ resa.chambre.hotel.nom }}
+                    </p>
+                    <div class="bg-light rounded p-3 mb-3 text-start">
+                        <div><span class="text-muted">Arrivée:</span> <strong>{{ resa.date_arrivee|date:"d/m/Y" }}</strong></div>
+                        <div><span class="text-muted">Départ:</span> <strong>{{ resa.date_depart|date:"d/m/Y" }}</strong></div>
+                        <div><span class="text-muted">Chambre N°:</span> <strong>{{ resa.chambre.numero }}</strong></div>
+                        <div><span class="text-muted">Étage:</span> <strong>{{ resa.chambre.etage }}</strong></div>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">Votre réservation a bien été enregistrée.</p>
+                    {% endif %}
+                    <p class="text-muted small">Un email de confirmation vous sera envoyé.</p>
+                    <div class="d-flex gap-2 justify-content-center mt-4">
+                        <a href="{% url 'client:mes_reservations' %}" class="btn btn-primary">
+                            <i class="fas fa-list me-2"></i>Mes réservations
+                        </a>
+                        <a href="{% url 'client:home' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-home me-2"></i>Accueil
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

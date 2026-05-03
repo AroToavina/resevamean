@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page introuvable — 404</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #c9a84c;
+            --navy: #1a3c5e;
+            --navy-mid: #2d5a8a;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Jost', sans-serif;
+            background: linear-gradient(135deg, #0f2236 0%, #1a3c5e 50%, #0f2236 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .card-404 {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(201,168,76,0.25);
+            border-radius: 24px;
+            padding: 60px 50px;
+            text-align: center;
+            max-width: 520px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+        }
+        .error-number {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 9rem;
+            font-weight: 600;
+            line-height: 1;
+            background: linear-gradient(135deg, var(--gold), #e8c97a, var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -4px;
+        }
+        .divider {
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            margin: 20px auto;
+        }
+        h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.8rem;
+            font-weight: 400;
+            color: #fff;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+        p {
+            color: rgba(255,255,255,0.55);
+            font-size: 0.95rem;
+            line-height: 1.7;
+            margin-bottom: 36px;
+        }
+        .url-shown {
+            display: inline-block;
+            background: rgba(201,168,76,0.1);
+            border: 1px solid rgba(201,168,76,0.2);
+            border-radius: 8px;
+            padding: 6px 16px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: var(--gold);
+            margin-bottom: 28px;
+            word-break: break-all;
+            max-width: 100%;
+        }
+        .btn-home {
+            background: linear-gradient(135deg, var(--gold), #e8c97a);
+            color: #1a3c5e;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 36px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-home:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(201,168,76,0.35);
+            color: #1a3c5e;
+        }
+        .btn-back {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.7);
+            border-radius: 12px;
+            padding: 14px 28px;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-back:hover {
+            border-color: rgba(255,255,255,0.5);
+            color: #fff;
+            background: rgba(255,255,255,0.05);
+        }
+        .icon-wrap {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: rgba(201,168,76,0.1);
+            border: 1px solid rgba(201,168,76,0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+        }
+        .icon-wrap i {
+            font-size: 1.6rem;
+            color: var(--gold);
+        }
+        .links-row {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+<div class="card-404">
+    <div class="icon-wrap">
+        <i class="fas fa-compass"></i>
+    </div>
+    <div class="error-number">404</div>
+    <div class="divider"></div>
+    <h2>Page introuvable</h2>
+    <p>
+        L'adresse que vous avez saisie n'existe pas !<br>
+        Vérifiez l'URL ou utilisez les liens ci-dessous.
+    </p>
+
+<!--    <div id="bad-url" class="url-shown"></div>
+-->
+    <div class="links-row">
+        <a href="javascript:history.back()" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Retour
+        </a>
+        <a href="/client/" class="btn-home">
+            <i class="fas fa-home"></i> Accueil
+        </a>
+    </div>
+</div>
+
+{% comment %} <script>
+    const el = document.getElementById('bad-url');
+    el.textContent = window.location.pathname + window.location.search;
+</script> {% endcomment %}
+</body>
+</html>

@@ -1,0 +1,244 @@
+{% extends 'admin/base.html' %}
+{% block title %}Statistiques{% endblock %}
+
+{% block extra_css %}
+<style>
+.stats-header {
+    background: linear-gradient(135deg, #1a3c5e 0%, #2d6a9f 100%);
+    border-radius: 16px;
+    padding: 28px 32px;
+    color: white;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+}
+.stats-header::after { content:''; position:absolute; right:-60px; top:-60px; width:200px; height:200px; border-radius:50%; background:rgba(255,255,255,0.06); }
+.stats-header::before { content:''; position:absolute; right:60px; bottom:-80px; width:160px; height:160px; border-radius:50%; background:rgba(255,255,255,0.04); }
+.kpi-card { border-radius:16px; padding:24px 22px; color:white; position:relative; overflow:hidden; border:none; transition:transform .2s, box-shadow .2s; }
+.kpi-card:hover { transform:translateY(-3px); box-shadow:0 8px 25px rgba(0,0,0,0.15)!important; }
+.kpi-icon { position:absolute; right:20px; top:50%; transform:translateY(-50%); font-size:3rem; opacity:0.18; }
+.kpi-label { font-size:.78rem; text-transform:uppercase; letter-spacing:1px; opacity:.8; margin-bottom:6px; }
+.kpi-value { font-size:2.4rem; font-weight:800; line-height:1; }
+.kpi-sub { font-size:.72rem; opacity:.65; margin-top:4px; }
+.bar-chart-container { display:flex; align-items:flex-end; gap:4px; height:160px; padding:0 4px; }
+.bar-item { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:4px; }
+.bar-fill { width:100%; border-radius:4px 4px 0 0; background:linear-gradient(180deg,#4a9fd4,#1a3c5e); min-height:3px; transition:opacity .2s; cursor:pointer; position:relative; }
+.bar-fill:hover { opacity:.75; }
+.bar-fill .bar-tooltip { display:none; position:absolute; bottom:100%; left:50%; transform:translateX(-50%); background:#1a3c5e; color:white; font-size:.7rem; padding:3px 8px; border-radius:4px; white-space:nowrap; margin-bottom:4px; z-index:10; }
+.bar-fill:hover .bar-tooltip { display:block; }
+.bar-label { font-size:.6rem; color:#888; text-align:center; writing-mode:vertical-rl; transform:rotate(180deg); max-height:40px; }
+.status-row { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+.status-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.status-bar-bg { flex:1; height:8px; border-radius:4px; background:#f0f0f0; overflow:hidden; }
+.status-bar-fill { height:100%; border-radius:4px; transition:width .8s ease; }
+.hotel-occ-row { margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid #f0f0f0; }
+.hotel-occ-row:last-child { border-bottom:none; margin-bottom:0; padding-bottom:0; }
+.revenue-table thead th { background:#f8f9fa; font-size:.8rem; text-transform:uppercase; letter-spacing:.5px; color:#666; }
+.revenue-table tbody tr:hover { background:#f8f9fe; }
+.section-title { font-size:.85rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#444; display:flex; align-items:center; gap:8px; }
+</style>
+{% endblock %}
+
+{% block page_title %}Statistiques{% endblock %}
+
+{% block content %}
+
+<div class="stats-header mb-4">
+    <div class="row align-items-center">
+        <div class="col">
+            <div style="font-size:.8rem;opacity:.7;text-transform:uppercase;letter-spacing:1px;">Tableau de bord analytique</div>
+            <h3 class="fw-bold mb-1 mt-1">Statistiques &amp; Performances</h3>
+            <div style="opacity:.7;font-size:.88rem;">Vue globale en temps réel de votre activité hôtelière</div>
+        </div>
+        <div class="col-auto">
+            <form method="get" class="d-flex gap-2 align-items-center">
+                <select name="hotel" class="form-select form-select-sm" style="min-width:180px;background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.3);color:white;">
+                    <option value="" style="color:#333;">Tous les hôtels</option>
+                    {% for h in hotels %}<option value="{{ h.pk }}" style="color:#333;" {% if hotel_filter == h.pk|stringformat:"i" %}selected{% endif %}>{{ h.nom }}</option>{% endfor %}
+                </select>
+                <button type="submit" class="btn btn-sm btn-light fw-semibold"><i class="fas fa-filter me-1 text-primary"></i>Filtrer</button>
+                {% if hotel_filter %}<a href="{% url 'users:statistiques' %}" class="btn btn-sm btn-outline-light"><i class="fas fa-times"></i></a>{% endif %}
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- KPIs -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card shadow-sm" style="background:linear-gradient(135deg,#1a3c5e,#2d6a9f);">
+            <i class="fas fa-calendar-check kpi-icon"></i>
+            <div class="kpi-label">Total Réservations</div>
+            <div class="kpi-value">{{ total_reservations }}</div>
+            <div class="kpi-sub">toutes périodes</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card shadow-sm" style="background:linear-gradient(135deg,#1a7a4a,#27ae60);">
+            <i class="fas fa-coins kpi-icon"></i>
+            <div class="kpi-label">Revenus Confirmés</div>
+            <div class="kpi-value">{{ total_revenu|floatformat:0 }}</div>
+            <div class="kpi-sub">MRU (remboursements déduits)</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card shadow-sm" style="background:linear-gradient(135deg,#b7600a,#f0a500);">
+            <i class="fas fa-users kpi-icon"></i>
+            <div class="kpi-label">Clients</div>
+            <div class="kpi-value">{{ total_clients }}</div>
+            <div class="kpi-sub">clients enregistrés</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card shadow-sm" style="background:linear-gradient(135deg,#5a1a7a,#8e44ad);">
+            <i class="fas fa-bed kpi-icon"></i>
+            <div class="kpi-label">Chambres</div>
+            <div class="kpi-value">{{ total_chambres }}</div>
+            <div class="kpi-sub">chambres actives</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Bar chart -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom py-3">
+                <span class="section-title"><i class="fas fa-chart-bar text-primary"></i>Réservations — 12 derniers mois</span>
+            </div>
+            <div class="card-body p-4">
+                {% if stats_mois %}
+                <div class="bar-chart-container" id="barChart">
+                    {% for m in stats_mois %}
+                    <div class="bar-item">
+                        <div class="bar-fill" data-count="{{ m.count }}" style="height:4px;">
+                            <div class="bar-tooltip">{{ m.count }} rés.</div>
+                        </div>
+                        <div class="bar-label">{{ m.mois|slice:":3" }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <script>
+                (function(){
+                    var bars=document.querySelectorAll('#barChart .bar-fill');
+                    var max=0;
+                    bars.forEach(function(b){var c=parseInt(b.dataset.count)||0;if(c>max)max=c;});
+                    if(!max)max=1;
+                    bars.forEach(function(b){
+                        var c=parseInt(b.dataset.count)||0;
+                        var h=Math.max(Math.round((c/max)*150),c>0?6:3);
+                        b.style.height=h+'px';
+                        if(c===0)b.style.background='#e9ecef';
+                    });
+                })();
+                </script>
+                <div class="mt-4 table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead><tr><th>Mois</th><th class="text-end">Réservations</th></tr></thead>
+                        <tbody>
+                        {% for m in stats_mois %}
+                        <tr>
+                            <td class="text-muted">{{ m.mois }}</td>
+                            <td class="text-end">
+                                {% if m.count > 0 %}
+                                <span class="badge bg-primary rounded-pill">{{ m.count }}</span>
+                                {% else %}<span class="text-muted small">—</span>{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-5"><i class="fas fa-chart-bar fa-3x mb-3 d-block opacity-25"></i>Aucune donnée</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Statuts -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom py-3">
+                <span class="section-title"><i class="fas fa-layer-group text-warning"></i>Par statut</span>
+            </div>
+            <div class="card-body p-3">
+                {% for s in stats_statuts %}
+                <div class="status-row">
+                    <div class="status-dot" style="background:{% if s.code == 'en_attente' %}#f0a500{% elif s.code == 'confirmee' %}#17a2b8{% elif s.code == 'checkin' %}#28a745{% elif s.code == 'checkout' %}#6c757d{% else %}#dc3545{% endif %};"></div>
+                    <div style="flex:1;min-width:0;">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small text-truncate">{{ s.label }}</span>
+                            <strong class="small ms-2">{{ s.count }}</strong>
+                        </div>
+                        <div class="status-bar-bg">
+                            <div class="status-bar-fill" style="width:{% if total_reservations > 0 %}{% widthratio s.count total_reservations 100 %}{% else %}0{% endif %}%;background:{% if s.code == 'en_attente' %}#f0a500{% elif s.code == 'confirmee' %}#17a2b8{% elif s.code == 'checkin' %}#28a745{% elif s.code == 'checkout' %}#6c757d{% else %}#dc3545{% endif %};"></div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Taux d'occupation -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom py-3">
+                <span class="section-title"><i class="fas fa-hotel text-success"></i>Taux d'occupation</span>
+            </div>
+            <div class="card-body p-3">
+                {% for t in taux_occupation %}
+                <div class="hotel-occ-row">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-semibold small text-truncate">{{ t.hotel.nom }}</span>
+                        <span class="badge ms-2 rounded-pill {% if t.taux >= 80 %}bg-danger{% elif t.taux >= 50 %}bg-warning text-dark{% else %}bg-success{% endif %}">{{ t.taux }}%</span>
+                    </div>
+                    <div class="status-bar-bg">
+                        <div class="status-bar-fill" style="width:{{ t.taux }}%;background:{% if t.taux >= 80 %}#dc3545{% elif t.taux >= 50 %}#f0a500{% else %}#28a745{% endif %};"></div>
+                    </div>
+                    <div class="text-muted mt-1" style="font-size:.73rem;"><i class="fas fa-bed me-1"></i>{{ t.nb_chambres }} ch.</div>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center small py-2">Aucune donnée</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Revenue table -->
+{% if not hotel_filter %}
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+        <span class="section-title"><i class="fas fa-table text-info"></i>Revenus par hôtel</span>
+        <small class="text-muted">Remboursements déduits</small>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover revenue-table mb-0">
+                <thead>
+                    <tr>
+                        <th class="ps-4">Hôtel</th>
+                        <th class="text-center">Réservations</th>
+                        <th class="text-end pe-4">Revenus nets</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in revenus_hotels %}
+                    <tr>
+                        <td class="ps-4 fw-semibold"><i class="fas fa-hotel me-2 text-muted"></i>{{ r.hotel.nom }}</td>
+                        <td class="text-center"><span class="badge bg-light text-dark border">{{ r.nb_reservations }}</span></td>
+                        <td class="text-end pe-4 fw-bold text-success">{{ r.revenu|floatformat:0 }} MRU</td>
+                        <td><a href="?hotel={{ r.hotel.pk }}" class="btn btn-sm btn-outline-primary py-0 px-2"><i class="fas fa-filter"></i></a></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center text-muted py-4">Aucune donnée</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

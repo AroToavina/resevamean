@@ -1,0 +1,92 @@
+{% extends 'admin/base.html' %}
+{% block title %}{{ action }} Utilisateur{% endblock %}
+{% block page_title %}{{ action }} un Utilisateur{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-lg-7">
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <i class="fas fa-user me-2"></i>{{ action }} un Utilisateur
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Nom *</label>
+                    <input type="text" name="nom" class="form-control" value="{{ target_user.nom|default:'' }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Prénom *</label>
+                    <input type="text" name="prenom" class="form-control" value="{{ target_user.prenom|default:'' }}" required>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Email *</label>
+                <input type="email" name="email" class="form-control" value="{{ target_user.email|default:'' }}" 
+                       {% if target_user %}readonly{% endif %} required>
+                {% if target_user %}
+                <small class="text-muted">L'email ne peut pas être modifié.</small>
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Téléphone</label>
+                <input type="text" name="telephone" class="form-control" value="{{ target_user.telephone|default:'' }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Rôle *</label>
+                <select name="role" class="form-select">
+                    {% for val, label in role_choices %}
+                    {% if current_user.role == 'admin' or val not in 'admin,manager' %}
+                    <option value="{{ val }}" {% if target_user.role == val %}selected{% endif %}>{{ label }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            {% if current_user.role == 'admin' %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Hôtel</label>
+                <select name="hotel" class="form-select">
+                    <option value="">-- Aucun hôtel --</option>
+                    {% for h in hotels %}
+                    <option value="{{ h.pk }}" {% if target_user.hotel_id == h.pk %}selected{% endif %}>{{ h.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            {% if target_user %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Statut</label>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="statut" id="statut"
+                           {% if target_user.statut %}checked{% endif %}>
+                    <label class="form-check-label" for="statut">Compte actif</label>
+                </div>
+            </div>
+            {% endif %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">
+                    Mot de passe {% if not target_user %}*{% else %}<small class="text-muted">(laisser vide pour ne pas changer)</small>{% endif %}
+                </label>
+                <input type="password" name="password" class="form-control" {% if not target_user %}required{% endif %} 
+                       placeholder="{% if target_user %}Nouveau mot de passe...{% else %}Mot de passe...{% endif %}">
+            </div>
+            {% if target_user %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Confirmer le mot de passe</label>
+                <input type="password" name="password_confirm" class="form-control" placeholder="Confirmer...">
+            </div>
+            {% endif %}
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>{{ action }}
+                </button>
+                <a href="{% url 'users:list' %}" class="btn btn-outline-secondary">Annuler</a>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'client/base.html' %}
+{% block title %}Connexion Client{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card">
+                <div class="card-header bg-primary text-white py-4 text-center">
+                    <h4 class="mb-0 fw-bold"><i class="fas fa-user-circle me-2"></i>Mes Réservations</h4>
+                    <p class="mb-0 small opacity-75 mt-1">Connectez-vous pour voir vos réservations</p>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Email</label>
+                            <input type="email" name="email" class="form-control form-control-lg"
+                                   placeholder="votre@email.com" required autofocus>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Numéro de téléphone</label>
+                            <input type="text" name="telephone" class="form-control form-control-lg"
+                                   placeholder="+222 XX XX XX XX" required>
+                            <div class="form-text">Le numéro utilisé lors de votre réservation</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>Accéder à mes réservations
+                        </button>
+                    </form>
+                    <hr class="my-4">
+                    <div class="text-center text-muted small">
+                        Pas encore de réservation?
+                        <a href="{% url 'client:recherche' %}">Réserver maintenant</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

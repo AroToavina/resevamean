@@ -1,0 +1,59 @@
+{% extends 'admin/base.html' %}
+{% block title %}{{ action }} Type de Chambre{% endblock %}
+{% block page_title %}{{ action }} un Type de Chambre{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-lg-7">
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <i class="fas fa-layer-group me-2"></i>{{ action }} un Type de Chambre
+    </div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Libellé *</label>
+                <input type="text" name="libelle" class="form-control" value="{{ tc.libelle|default:'' }}" required>
+            </div>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Prix par nuit (MRU) *</label>
+                    <input type="number" name="prix_nuit" class="form-control" value="{{ tc.prix_nuit|default:'' }}" min="0" step="0.01" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Capacité (personnes) *</label>
+                    <input type="number" name="capacite" class="form-control" value="{{ tc.capacite|default:1 }}" min="1" required>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Description</label>
+                <textarea name="description" class="form-control" rows="3">{{ tc.description|default:'' }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Équipements</label>
+                <div class="row g-2">
+                    {% for eq in equipements %}
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="equipements" 
+                                   value="{{ eq.pk }}" id="eq{{ eq.pk }}"
+                                   {% if tc and eq in tc.equipements.all %}checked{% endif %}>
+                            <label class="form-check-label" for="eq{{ eq.pk }}">{{ eq.nom }}</label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>{{ action }}
+                </button>
+                <a href="{% url 'chambre:type_list' %}" class="btn btn-outline-secondary">Annuler</a>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+</div>
+{% endblock %}

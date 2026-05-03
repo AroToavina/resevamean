@@ -1,0 +1,117 @@
+{% extends 'admin/base.html' %}
+{% block title %}Réservations{% endblock %}
+{% block page_title %}Gestion des Réservations{% endblock %}
+
+{% block content %}
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-3">
+                <input type="text" name="q" class="form-control" placeholder="Rechercher client, chambre..." value="{{ search }}">
+            </div>
+            <div class="col-md-2">
+                <select name="statut" class="form-select">
+                    <option value="">Tous statuts</option>
+                    {% for val, label in statut_choices %}
+                    <option value="{{ val }}" {% if statut_filter == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if current_user.role == 'admin' %}
+            <div class="col-md-2">
+                <select name="hotel" class="form-select">
+                    <option value="">Tous hôtels</option>
+                    {% for h in hotels %}
+                    <option value="{{ h.pk }}" {% if hotel_filter == h.pk|stringformat:"i" %}selected{% endif %}>{{ h.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            <div class="col-md-2">
+                <input type="date" name="date_from" class="form-control" value="{{ date_from }}" placeholder="Du">
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="date_to" class="form-control" value="{{ date_to }}" placeholder="Au">
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if expirees_count > 0 %}
+<div class="alert alert-warning">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    {{ expirees_count }} réservation(s) avec date de départ dépassée encore en statut actif.
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <h6 class="mb-0 fw-bold"><i class="fas fa-calendar-check me-2 text-primary"></i>Liste des Réservations</h6>
+        <a href="{% url 'reservation:create' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus me-1"></i>Nouvelle
+        </a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-3">#</th>
+                        <th>Client</th>
+                        <th>Chambre / Hôtel</th>
+                        <th>Arrivée</th>
+                        <th>Départ</th>
+                        <th>Personnes</th>
+                        <th>Montant</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for resa in reservations %}
+                <tr>
+                    <td class="ps-3 text-muted small">{{ resa.pk }}</td>
+                    <td>
+                        <div class="fw-semibold">{{ resa.client.prenom }} {{ resa.client.nom }}</div>
+                        <small class="text-muted">{{ resa.client.telephone }}</small>
+                    </td>
+                    <td>
+                        <div>Ch. {{ resa.chambre.numero }}</div>
+                        <small class="text-muted">{{ resa.chambre.hotel.nom }}</small>
+                    </td>
+                    <td>{{ resa.date_arrivee|date:"d/m/Y" }}</td>
+                    <td>{{ resa.date_depart|date:"d/m/Y" }}</td>
+                    <td>
+                        <i class="fas fa-user me-1"></i>{{ resa.nbr_adultes }}
+                        {% if resa.nbr_enfants > 0 %} + {{ resa.nbr_enfants }}<i class="fas fa-child ms-1"></i>{% endif %}
+                    </td>
+                    <td class="fw-semibold">{{ resa.montant_total|floatformat:0 }} MRU</td>
+                    <td>
+                        {% if resa.statut == 'en_attente' %}<span class="badge bg-warning text-dark">En attente</span>
+                        {% elif resa.statut == 'confirmee' %}<span class="badge bg-info">Confirmée</span>
+                        {% elif resa.statut == 'checkin' %}<span class="badge bg-success">Check-in</span>
+                        {% elif resa.statut == 'checkout' %}<span class="badge bg-secondary">Check-out</span>
+                        {% elif resa.statut == 'annulee' %}<span class="badge bg-danger">Annulée</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'reservation:detail' resa.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="9" class="text-center text-muted py-5">
+                    <i class="fas fa-calendar-times fa-3x mb-3 d-block"></i>
+                    Aucune réservation trouvée
+                </td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

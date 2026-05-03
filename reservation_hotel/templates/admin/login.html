@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion Staff | HotelManager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
+    <style>
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a3c5e 0%, #2d6a9f 50%, #1a3c5e 100%);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .login-card {
+            background: white; border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 50px 40px; max-width: 420px; width: 100%;
+        }
+        .login-logo { font-size: 3rem; color: #1a3c5e; margin-bottom: 10px; }
+        .form-control { border-radius: 10px; padding: 12px 15px; }
+        .btn-login {
+            background: linear-gradient(135deg, #1a3c5e, #2d6a9f);
+            color: white; border: none; border-radius: 10px;
+            padding: 12px; font-size: 1rem; width: 100%;
+        }
+        .btn-login:hover { opacity: 0.9; color: white; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="text-center mb-4">
+            <div class="login-logo"><i class="fas fa-hotel"></i></div>
+            <h3 class="fw-bold text-dark">HotelManager</h3>
+            <p class="text-muted">Interface de gestion hôtelière</p>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Email professionnel</label>
+                <input type="email" name="email" class="form-control" placeholder="votre@email.com" required autofocus>
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-semibold">Mot de passe</label>
+                <div class="input-group">
+                    <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" required>
+                    <button type="button" class="btn btn-outline-secondary" onclick="togglePwd()">
+                        <i class="fas fa-eye" id="eyeIcon"></i>
+                    </button>
+                </div>
+            </div>
+            <button type="submit" class="btn-login">
+                <i class="fas fa-sign-in-alt me-2"></i>Se connecter
+            </button>
+        </form>
+        <hr class="my-4">
+        <div class="text-center">
+            <a href="{% url 'client:home' %}" class="text-muted text-decoration-none small">
+                <i class="fas fa-arrow-left me-1"></i>Aller à l'espace client
+            </a>
+        </div>
+    </div>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+    function togglePwd() {
+        const p = document.getElementById('password');
+        const i = document.getElementById('eyeIcon');
+        if (p.type === 'password') { p.type = 'text'; i.className = 'fas fa-eye-slash'; }
+        else { p.type = 'password'; i.className = 'fas fa-eye'; }
+    }
+    </script>
+</body>
+</html>

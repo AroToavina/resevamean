@@ -1,0 +1,73 @@
+<div class="relative min-vh-100 overflow-hidden d-flex flex-column text-white">
+  <!-- Background Image -->
+  <div class="position-absolute top-0 start-0 w-100 h-100" 
+       style="background: url('assets/hotel-lobby.jpg') center/cover no-repeat; z-index: -2;">
+  </div>
+  <!-- Overlay Gradient -->
+  <div class="position-absolute top-0 start-0 w-100 h-100" 
+       style="background: linear-gradient(to bottom, rgba(26, 30, 38, 0.8), rgba(26, 30, 38, 0.6), rgba(26, 30, 38, 0.95)); z-index: -1;">
+  </div>
+
+  <header class="d-flex align-items-center justify-content-between p-4 px-lg-5">
+    <div class="d-flex align-items-center gap-2">
+      <div class="h-9 w-9 bg-gold rounded d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+        <i class="bi bi-buildings-fill text-navy-deep"></i>
+      </div>
+      <span class="font-display h3 mb-0">Maison Royale</span>
+    </div>
+    <div class="d-flex align-items-center gap-4">
+      <ng-container *ngIf="!currentUser">
+        <a routerLink="/login" class="text-white text-decoration-none small text-uppercase tracking-wider hover-gold">Connexion</a>
+      </ng-container>
+      <ng-container *ngIf="currentUser">
+        <span class="small text-white-50 text-uppercase d-none d-md-inline">Bienvenue, {{ currentUser.nom }}</span>
+        <a routerLink="/profil" class="text-white text-decoration-none small text-uppercase tracking-wider hover-gold">Mon Profil</a>
+        <button (click)="onLogout()" class="btn btn-link text-white text-decoration-none small text-uppercase tracking-wider p-0 hover-gold">Déconnexion</button>
+      </ng-container>
+    </div>
+  </header>
+
+  <div class="flex-grow-1 d-flex align-items-center justify-content-center px-4">
+    <div class="text-center" style="max-width: 800px;">
+      <span class="text-gold smallest text-uppercase tracking-widest mb-3 d-block">Depuis 1923</span>
+      <h1 class="display-1 font-display mt-2 mb-4">
+        <span class="word" *ngFor="let word of 'Un séjour d\'exception, orchestré au détail près.'.split(' '); let i = index" 
+              [style.animation-delay.s]="i * 0.2">
+          {{ word }}&nbsp;
+        </span>
+      </h1>
+      <p class="lead text-white-50 mx-auto mb-5" style="max-width: 600px;">
+        Réservation en temps réel, disponibilités live, expérience raffinée.
+        La Maison Royale réinvente l'art de l'hospitalité.
+      </p>
+      
+      <div class="d-flex flex-wrap justify-content-center gap-3">
+        <a routerLink="/accueil-client" class="btn btn-accent px-5 py-3 rounded-pill shadow-lg">
+          Réserver une suite <i class="bi bi-calendar-check ms-2"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <footer class="p-4 text-center text-white-50 smallest text-uppercase tracking-widest">
+    © Maison Royale — Hotel MEAN Manager
+  </footer>
+</div>
+
+<style>
+  .smallest { font-size: 11px; tracking-widest: 0.3em; }
+  .hover-gold:hover { color: var(--gold) !important; }
+  .h-9 { width: 36px; height: 36px; }
+  
+  .word {
+    display: inline-block;
+    opacity: 0;
+    animation: fadeInTwoTimes 4s ease-in-out 2 forwards;
+  }
+  
+  @keyframes fadeInTwoTimes {
+    0% { opacity: 0; }
+    20%, 80% { opacity: 1; }
+    100% { opacity: 1; }
+  }
+</style>

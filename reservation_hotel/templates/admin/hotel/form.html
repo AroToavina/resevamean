@@ -1,0 +1,74 @@
+{% extends 'admin/base.html' %}
+{% block title %}{{ action }} Hôtel{% endblock %}
+{% block page_title %}{{ action }} un Hôtel{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-lg-7">
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <i class="fas fa-hotel me-2"></i>{{ action }} un Hôtel
+    </div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Nom *</label>
+                <input type="text" name="nom" class="form-control" value="{{ hotel.nom|default:'' }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Adresse *</label>
+                <input type="text" name="adresse" class="form-control" value="{{ hotel.adresse|default:'' }}" required>
+            </div>
+            {% if current_user.role == 'admin' %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Ville *</label>
+                <select name="ville" class="form-select" required>
+                    <option value="">-- Choisir une ville --</option>
+                    {% for v in villes %}
+                    <option value="{{ v.pk }}" {% if hotel.ville_id == v.pk %}selected{% endif %}>{{ v.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Téléphone</label>
+                    <input type="text" name="telephone" class="form-control" value="{{ hotel.telephone|default:'' }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Email</label>
+                    <input type="email" name="email" class="form-control" value="{{ hotel.email|default:'' }}">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Numéro Bankily</label>
+                <input type="text" name="num_bankily" class="form-control" value="{{ hotel.num_bankily|default:'' }}"
+                       placeholder="Ex: 22000000">
+                <small class="text-muted">Numéro affiché aux clients pour paiement Bankily</small>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Description</label>
+                <textarea name="description" class="form-control" rows="3">{{ hotel.description|default:'' }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Photo</label>
+                {% if hotel.image %}
+                <div class="mb-2">
+                    <img src="{{ hotel.image.url }}" alt="" style="max-height:100px;border-radius:8px;">
+                </div>
+                {% endif %}
+                <input type="file" name="image" class="form-control" accept="image/*">
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>{{ action }}
+                </button>
+                <a href="{% url 'hotel:list' %}" class="btn btn-outline-secondary">Annuler</a>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+</div>
+{% endblock %}

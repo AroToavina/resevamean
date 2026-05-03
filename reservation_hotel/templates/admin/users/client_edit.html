@@ -1,0 +1,96 @@
+{% extends 'admin/base.html' %}
+{% block title %}Modifier Client{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold mb-0"><i class="fas fa-user-edit me-2 text-primary"></i>Modifier Client</h4>
+            <a href="{% url 'users:client_list' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-primary text-white py-3">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-user me-2"></i>{{ client.prenom }} {{ client.nom }}</h6>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Prénom *</label>
+                            <input type="text" name="prenom" value="{{ client.prenom }}" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nom *</label>
+                            <input type="text" name="nom" value="{{ client.nom }}" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Email *</label>
+                            <input type="email" name="email" value="{{ client.email }}" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Téléphone *</label>
+                            <input type="text" name="telephone" value="{{ client.telephone }}" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nationalité</label>
+                            <input type="text" name="nationalite" value="{{ client.nationalite }}" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Type d'identité</label>
+                            <select name="type_identite" class="form-select">
+                                <option value="CNI" {% if client.type_identite == 'CNI' %}selected{% endif %}>Carte Nationale d'Identité</option>
+                                <option value="PASSEPORT" {% if client.type_identite == 'PASSEPORT' %}selected{% endif %}>Passeport</option>
+                                <option value="PERMIS" {% if client.type_identite == 'PERMIS' %}selected{% endif %}>Permis de conduire</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Enregistrer les modifications
+                        </button>
+                        <a href="{% url 'users:client_list' %}" class="btn btn-outline-secondary">Annuler</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Réservations du client -->
+        {% with reservations=client.reservations.all %}
+        {% if reservations %}
+        <div class="card mt-4">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-calendar-check me-2"></i>Réservations ({{ reservations.count }})</h6>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="bg-light"><tr><th>#</th><th>Hôtel</th><th>Chambre</th><th>Dates</th><th>Statut</th></tr></thead>
+                    <tbody>
+                        {% for r in reservations|slice:":10" %}
+                        <tr>
+                            <td><a href="{% url 'reservation:detail' r.pk %}">#{{ r.pk }}</a></td>
+                            <td>{{ r.chambre.hotel.nom }}</td>
+                            <td>{{ r.chambre.type_chambre.libelle }}</td>
+                            <td class="small">{{ r.date_arrivee|date:"d/m/Y" }} → {{ r.date_depart|date:"d/m/Y" }}</td>
+                            <td>
+                                {% if r.statut == 'en_attente' %}<span class="badge bg-warning text-dark">En attente</span>
+                                {% elif r.statut == 'confirmee' %}<span class="badge bg-info">Confirmée</span>
+                                {% elif r.statut == 'checkin' %}<span class="badge bg-success">En séjour</span>
+                                {% elif r.statut == 'checkout' %}<span class="badge bg-secondary">Terminée</span>
+                                {% elif r.statut == 'annulee' %}<span class="badge bg-danger">Annulée</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+        {% endwith %}
+    </div>
+</div>
+{% endblock %}

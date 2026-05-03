@@ -1,0 +1,58 @@
+{% extends 'admin/base.html' %}
+{% block title %}Villes{% endblock %}
+{% block page_title %}Gestion des Villes{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-plus me-2"></i>Ajouter une ville
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <input type="text" name="nom" class="form-control" placeholder="Nom de la ville..." required>
+                        <button type="submit" class="btn btn-primary">Ajouter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-header bg-white">
+                <span class="fw-semibold">{{ villes|length }} ville(s)</span>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Ville</th>
+                            <th>Hôtels</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ville in villes %}
+                        <tr>
+                            <td class="fw-semibold">{{ ville.nom }}</td>
+                            <td><span class="badge bg-secondary">{{ ville.hotels.count }} hôtels</span></td>
+                            <td>
+                                <a href="{% url 'ville:delete' ville.pk %}" class="btn btn-sm btn-outline-danger"
+                                   onclick="return confirm('Supprimer {{ ville.nom }}?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="text-center text-muted py-3">Aucune ville</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

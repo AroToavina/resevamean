@@ -1,0 +1,35 @@
+services:
+  backend:
+    build: ./backend
+    container_name: mean-backend
+    networks:
+      - backend-net
+    depends_on:
+      - mongo
+
+  frontend:
+    build: ./frontend
+    container_name: mean-frontend
+    ports:
+      - "80:80"
+    networks:
+      - frontend-net
+      - backend-net
+
+  reservation:
+    build: ./reservation_hotel
+    container_name: django-app
+    networks:
+      - backend-net
+
+  mongo:
+    image: mongodb/mongodb-community-server:latest # Version suggérée dans TECH_VERSIONS[cite: 1]
+    container_name: mean-db
+    networks:
+      - backend-net
+
+networks:
+  frontend-net:
+    driver: bridge
+  backend-net:
+    driver: bridge

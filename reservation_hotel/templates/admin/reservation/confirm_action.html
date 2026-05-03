@@ -1,0 +1,123 @@
+{% extends 'admin/base.html' %}
+{% block title %}Confirmation{% endblock %}
+{% block page_title %}Confirmation d'action{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-warning text-dark py-3">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-exclamation-triangle me-2"></i>Confirmation requise</h6>
+            </div>
+            <div class="card-body text-center py-5">
+                <i class="fas fa-question-circle fa-4x text-warning mb-3"></i>
+                <h4>{{ action }}</h4>
+                <p class="text-muted">Réservation #{{ resa.pk }} — {{ resa.client.prenom }} {{ resa.client.nom }}</p>
+                {% if show_date_form %}
+                <div class="alert alert-info mt-3 text-start">
+                    <strong><i class="fas fa-calendar-plus me-2"></i>Prolonger la réservation</strong><br>
+                    <small class="text-muted">Date de départ actuelle : <strong>{{ resa.date_depart|date:"d/m/Y H:i" }}</strong></small><br>
+                    <small class="text-muted">Prix par nuit : <strong>{{ prix_nuit }} MRU</strong></small><br>
+                    <small class="text-warning"><i class="fas fa-info-circle me-1"></i>Minimum : 24 heures supplémentaires</small>
+                </div>
+                <form method="post" action="{{ action_url }}" class="mt-3" id="prolongForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nouvelle date et heure de départ *</label>
+                        <input type="datetime-local" name="nouvelle_date_depart" id="nouvelleDateDepart"
+                               class="form-control" required
+                               min="{{ date_min_prolongation }}">
+                        <small class="text-muted">Date minimum : {{ date_min_prolongation|slice:":10" }} (+ 24h minimum)</small>
+                    </div>
+
+                    <!-- Calcul dynamique du montant -->
+                    <div id="calcul-montant" class="alert alert-success text-start d-none">
+                        <strong><i class="fas fa-calculator me-2"></i>Montant à payer</strong><br>
+                        <span id="detail-nuits"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Mode de paiement *</label>
+                        <select name="mode_paiement" class="form-select" required>
+                            <option value="especes">💵 Espèces</option>
+                            <option value="espace">🏦 Espace</option>
+                            <option value="bankily">📱 Bankily</option>
+                            <option value="visa">💳 Visa/MasterCard</option>
+                        </select>
+                    </div>
+
+                    <div class="d-flex gap-2 justify-content-center">
+                        <a href="{% url 'reservation:detail' resa.pk %}" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-times me-2"></i>Annuler
+                        </a>
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-calendar-check me-2"></i>Prolonger et payer
+                        </button>
+                    </div>
+                </form>
+
+                <script>
+                (function() {
+                    const input = document.getElementById('nouvelleDateDepart');
+                    const calcDiv = document.getElementById('calcul-montant');
+                    const detailSpan = document.getElementById('detail-nuits');
+                    const prixNuit = {{ prix_nuit }};
+                    // Timestamps en ms
+                    const dateArriveeTs = {{ date_arrivee_ts }};
+                    const dateDepartTs  = {{ date_depart_ts }};
+                    // Nuits et montant actuels (avant prolongation)
+                    const ancienNuits   = Math.ceil((dateDepartTs - dateArriveeTs) / (1000 * 3600 * 24));
+                    const ancienMontant = ancienNuits * prixNuit;
+
+                    input.addEventListener('change', function() {
+                        const nouvelleDate = new Date(this.value);
+                        if (!this.value || isNaN(nouvelleDate)) {
+                            calcDiv.classList.add('d-none');
+                            return;
+                        }
+                        const diffAvecDepart = nouvelleDate.getTime() - dateDepartTs;
+                        if (diffAvecDepart < 24 * 3600 * 1000) {
+                            calcDiv.classList.add('d-none');
+                            return;
+                        }
+                        // Calcul identique au modèle Python : ceil((nouvelle_depart - arrivee) / 86400)
+                        const nouveauNuits = Math.ceil((nouvelleDate.getTime() - dateArriveeTs) / (1000 * 3600 * 24));
+                        const nouveauMontant = nouveauNuits * prixNuit;
+                        const nuitsSup = nouveauNuits - ancienNuits;
+                        const montantSup = nouveauMontant - ancienMontant;
+
+                        detailSpan.innerHTML =
+                            `<table class="table table-sm mb-0 text-start">` +
+                            `<tr><td>Nuits actuelles</td><td><strong>${ancienNuits} nuit(s)</strong></td><td class="text-muted">${ancienMontant} MRU</td></tr>` +
+                            `<tr><td>Nouvelles nuits totales</td><td><strong>${nouveauNuits} nuit(s)</strong></td><td>${nouveauMontant} MRU</td></tr>` +
+                            `<tr class="table-success"><td><strong>Supplément à payer</strong></td><td><strong>+${nuitsSup} nuit(s)</strong></td>` +
+                            `<td><strong class="text-success fs-6">+${montantSup} MRU</strong></td></tr>` +
+                            `</table>`;
+                        calcDiv.classList.remove('d-none');
+                    });
+                })();
+                </script>
+                {% else %}
+                {% if montant_total %}
+                <div class="alert alert-info mt-3">
+                    <strong>Vérification financière:</strong><br>
+                    Total: {{ montant_total }} MRU | Payé: {{ montant_paye }} MRU
+                </div>
+                {% endif %}
+                <div class="d-flex gap-2 justify-content-center mt-4">
+                    <a href="{% url 'reservation:detail' resa.pk %}" class="btn btn-outline-secondary btn-lg">
+                        <i class="fas fa-times me-2"></i>Annuler
+                    </a>
+                    <form method="post" action="{{ action_url }}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-check me-2"></i>Confirmer
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

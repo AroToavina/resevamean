@@ -1,0 +1,59 @@
+{% extends 'admin/base.html' %}
+{% block title %}Hôtels{% endblock %}
+{% block page_title %}Gestion des Hôtels{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div></div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'ville:list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-city me-2"></i>Gérer les Villes
+        </a>
+        <a href="{% url 'hotel:create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Nouvel Hôtel
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    {% for hotel in hotels %}
+    <div class="col-md-4">
+        <div class="card h-100">
+            {% if hotel.image %}
+            <img src="{{ hotel.image.url }}" class="card-img-top" style="height:160px;object-fit:cover;" alt="{{ hotel.nom }}">
+            {% else %}
+            <div class="bg-light d-flex align-items-center justify-content-center" style="height:160px;">
+                <i class="fas fa-hotel fa-3x text-muted"></i>
+            </div>
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">{{ hotel.nom }}</h5>
+                <p class="text-muted small mb-1">
+                    <i class="fas fa-map-marker-alt me-1"></i>{{ hotel.adresse }}, {{ hotel.ville.nom }}
+                </p>
+                {% if hotel.telephone %}
+                <p class="text-muted small mb-1"><i class="fas fa-phone me-1"></i>{{ hotel.telephone }}</p>
+                {% endif %}
+                {% if hotel.num_bankily %}
+                <p class="text-muted small mb-1"><i class="fas fa-mobile-alt me-1"></i>Bankily: {{ hotel.num_bankily }}</p>
+                {% endif %}
+                <div class="mt-2">
+                    <span class="badge bg-secondary">{{ hotel.chambres.count }} chambres</span>
+                    <span class="badge bg-primary ms-1">{{ hotel.users.count }} users</span>
+                </div>
+            </div>
+            <div class="card-footer bg-white">
+                <a href="{% url 'hotel:edit' hotel.pk %}" class="btn btn-sm btn-outline-primary w-100">
+                    <i class="fas fa-edit me-1"></i>Modifier
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center text-muted py-5">
+        <i class="fas fa-hotel fa-3x mb-3"></i>
+        <p>Aucun hôtel créé</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,490 @@
+{% extends 'client/base.html' %}
+{% block title %}Réserver — {{ type_chambre.libelle }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Progress Steps ── */
+.steps-bar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 32px;
+}
+.step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+}
+.step-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 60%;
+    right: -40%;
+    height: 2px;
+    background: #dee2e6;
+    z-index: 0;
+}
+.step-item.done:not(:last-child)::after { background: var(--bs-success); }
+.step-circle {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 2px solid #dee2e6;
+    background: white;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .95rem;
+    color: #aaa;
+    z-index: 1;
+    transition: all .3s;
+}
+.step-item.active .step-circle {
+    border-color: #1a3c5e;
+    background: #1a3c5e;
+    color: white;
+    box-shadow: 0 0 0 4px rgba(26,60,94,.15);
+}
+.step-item.done .step-circle {
+    border-color: #28a745;
+    background: #28a745;
+    color: white;
+}
+.step-label { font-size: .72rem; margin-top: 6px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+.step-item.active .step-label { color: #1a3c5e; }
+.step-item.done .step-label { color: #28a745; }
+
+/* ── Step panels ── */
+.step-panel { display: none; }
+.step-panel.active { display: block; }
+
+/* ── Payment options ── */
+.pay-option {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: all .2s;
+    background: white;
+}
+.pay-option:hover { border-color: #2d6a9f; background: #f0f7ff; }
+.pay-option.selected { border-color: #1a3c5e; background: #e8f0fa; }
+.pay-option.disabled { opacity: .5; cursor: not-allowed; }
+
+/* ── Bankily number display ── */
+.bankily-number {
+    font-size: 2rem; font-weight: 900; letter-spacing: 6px;
+    color: #1a3c5e; font-family: monospace;
+    background: #f0f7ff; border-radius: 12px;
+    padding: 16px 24px; display: inline-block;
+    border: 2px dashed #2d6a9f;
+}
+
+/* ── Recap card ── */
+.recap-card { position: sticky; top: 20px; }
+.recap-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f0f0f0; }
+.recap-row:last-child { border: none; }
+.total-row { font-size: 1.15rem; font-weight: 800; color: #1a3c5e; padding-top: 10px; }
+
+/* ── Form styling ── */
+.form-control:focus, .form-select:focus { border-color: #2d6a9f; box-shadow: 0 0 0 .25rem rgba(45,106,159,.2); }
+.section-heading { font-size: .75rem; text-transform: uppercase; letter-spacing: 1px; color: #888; font-weight: 700; margin-bottom: 14px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 1000px;">
+
+    <!-- Progress bar -->
+    <div class="steps-bar mb-4" id="stepsBar">
+        <div class="step-item active" id="step-ind-1">
+            <div class="step-circle">1</div>
+            <div class="step-label">Vos infos</div>
+        </div>
+        <div class="step-item" id="step-ind-2">
+            <div class="step-circle">2</div>
+            <div class="step-label">Paiement</div>
+        </div>
+        <div class="step-item" id="step-ind-3">
+            <div class="step-circle">3</div>
+            <div class="step-label">Confirmation</div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Left : form -->
+        <div class="col-lg-7">
+            <form method="post" id="mainForm">
+                {% csrf_token %}
+                <input type="hidden" name="etape" value="final">
+                <input type="hidden" name="chambre" value="{{ chambre.pk }}">
+                <input type="hidden" name="date_arrivee" value="{{ date_arrivee }}">
+                <input type="hidden" name="date_depart" value="{{ date_depart }}">
+                <input type="hidden" name="adultes" value="{{ adultes }}">
+                <input type="hidden" name="enfants" value="{{ enfants }}">
+                <input type="hidden" name="mode_paiement" id="modePaiementInput" value="">
+
+                <!-- ═══ STEP 1 : Infos personnelles ═══ -->
+                <div class="step-panel active" id="panel-1">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header py-3" style="background: linear-gradient(135deg,#1a3c5e,#2d6a9f); border-radius: 12px 12px 0 0;">
+                            <h5 class="mb-0 fw-bold text-white"><i class="fas fa-user me-2"></i>Vos informations personnelles</h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="section-heading">Identité</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Prénom <span class="text-danger">*</span></label>
+                                    <input type="text" name="prenom" id="f_prenom" class="form-control form-control-lg" placeholder="Votre prénom" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Nom <span class="text-danger">*</span></label>
+                                    <input type="text" name="nom" id="f_nom" class="form-control form-control-lg" placeholder="Votre nom" required>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                                    <input type="email" name="email" id="f_email" class="form-control form-control-lg" placeholder="votre@email.com" required>
+                                    <div class="form-text"><i class="fas fa-info-circle me-1 text-primary"></i>Cet email vous permet de suivre votre réservation</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Téléphone <span class="text-danger">*</span></label>
+                                    <input type="tel" name="telephone" id="f_telephone" class="form-control form-control-lg" placeholder="+222 XX XX XX XX" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Nationalité</label>
+                                    <input type="text" name="nationalite" class="form-control form-control-lg" placeholder="Mauritanienne">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Type d'identité</label>
+                                    <select name="type_identite" class="form-select form-select-lg">
+                                        <option value="CNI">Carte Nationale d'Identité</option>
+                                        <option value="PASSEPORT">Passeport</option>
+                                        <option value="PERMIS">Permis de conduire</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button type="button" class="btn btn-primary btn-lg w-100 fw-bold" onclick="goToStep2()">
+                                <i class="fas fa-arrow-right me-2"></i>Continuer vers le paiement
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ STEP 2 : Choix paiement ═══ -->
+                <div class="step-panel" id="panel-2">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header py-3" style="background: linear-gradient(135deg,#1a7a4a,#28a745); border-radius: 12px 12px 0 0;">
+                            <h5 class="mb-0 fw-bold text-white"><i class="fas fa-credit-card me-2"></i>Mode de paiement</h5>
+                        </div>
+                        <div class="card-body p-4">
+
+                            <!-- Résumé client sélectionné -->
+                            <div class="alert alert-light border mb-4 d-flex align-items-center gap-3">
+                                <i class="fas fa-user-check text-success fa-lg"></i>
+                                <div>
+                                    <div class="fw-semibold" id="summary-name">—</div>
+                                    <div class="text-muted small" id="summary-contact">—</div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary ms-auto" onclick="goToStep1()">
+                                    <i class="fas fa-edit me-1"></i>Modifier
+                                </button>
+                            </div>
+
+                            <div class="section-heading">Choisissez votre mode de paiement</div>
+
+                            <!-- Options paiement -->
+                            <div class="row g-3 mb-4">
+                                <!-- Bankily -->
+                                <div class="col-12">
+                                    <div class="pay-option" id="opt-bankily" onclick="selectPayment('bankily')">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center" style="width:52px;height:52px;flex-shrink:0;">
+                                                <i class="fas fa-mobile-alt text-success fa-xl"></i>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <div class="fw-bold fs-6">Bankily <span class="badge bg-success ms-1">Disponible</span></div>
+                                                <div class="text-muted small">Paiement mobile — Envoyez le montant, puis soumettez votre preuve</div>
+                                            </div>
+                                            <i class="fas fa-chevron-right text-muted"></i>
+                                        </div>
+                                        <!-- Détails Bankily -->
+                                        <div id="bankily-details" class="mt-3 pt-3 border-top d-none">
+                                            <div class="text-center mb-3">
+                                                <div class="text-muted small mb-2">Envoyez <strong class="text-success">{{ montant_chambre|floatformat:0 }} MRU</strong> au numéro :</div>
+                                                <div class="bankily-number">{{ hotel.num_bankily }}</div>
+                                                <div class="text-muted small mt-2"><i class="fas fa-hotel me-1"></i>{{ hotel.nom }}</div>
+                                            </div>
+                                            <div class="alert alert-warning py-2 small mb-3">
+                                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                                Après le virement, vous devrez fournir le <strong>code de transaction</strong> et une <strong>capture d'écran</strong>.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Visa (indisponible) -->
+                                <div class="col-12">
+                                    <div class="pay-option disabled">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="rounded-circle bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center" style="width:52px;height:52px;flex-shrink:0;">
+                                                <i class="fas fa-credit-card text-secondary fa-xl"></i>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <div class="fw-bold fs-6 text-muted">Visa / MasterCard <span class="badge bg-secondary ms-1">Indisponible</span></div>
+                                                <div class="text-muted small">Ce service sera disponible prochainement</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Error msg -->
+                            <div id="pay-error" class="alert alert-danger d-none">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                Veuillez sélectionner un mode de paiement.
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-outline-secondary btn-lg" onclick="goToStep1()">
+                                    <i class="fas fa-arrow-left me-2"></i>Retour
+                                </button>
+                                <button type="button" class="btn btn-success btn-lg flex-grow-1 fw-bold" onclick="goToStep3()">
+                                    <i class="fas fa-arrow-right me-2"></i>Vérifier et confirmer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ STEP 3 : Confirmation finale ═══ -->
+                <div class="step-panel" id="panel-3">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header py-3" style="background: linear-gradient(135deg,#6a1a5e,#9d44ac); border-radius: 12px 12px 0 0;">
+                            <h5 class="mb-0 fw-bold text-white"><i class="fas fa-check-double me-2"></i>Vérification finale</h5>
+                        </div>
+                        <div class="card-body p-4">
+
+                            <!-- Récap client -->
+                            <div class="section-heading">Vos informations</div>
+                            <div class="mb-4 p-3 bg-light rounded">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="fw-bold" id="conf-name">—</div>
+                                        <div class="text-muted small" id="conf-email">—</div>
+                                        <div class="text-muted small" id="conf-tel">—</div>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="goToStep1()">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Récap réservation -->
+                            <div class="section-heading">Votre réservation</div>
+                            <div class="mb-4 p-3 bg-light rounded">
+                                <div class="recap-row"><span class="text-muted">Chambre</span><strong>{{ type_chambre.libelle }}</strong></div>
+                                <div class="recap-row"><span class="text-muted">Hôtel</span><strong>{{ hotel.nom }}</strong></div>
+                                <div class="recap-row"><span class="text-muted">Arrivée</span><strong>{{ date_arrivee }}</strong></div>
+                                <div class="recap-row"><span class="text-muted">Départ</span><strong>{{ date_depart }}</strong></div>
+                                <div class="recap-row"><span class="text-muted">Durée</span><strong>{{ nombre_nuits }} nuit(s)</strong></div>
+                                <div class="recap-row total-row"><span>Total à payer</span><strong class="text-primary">{{ montant_chambre|floatformat:0 }} MRU</strong></div>
+                            </div>
+
+                            <!-- Récap paiement -->
+                            <div class="section-heading">Mode de paiement</div>
+                            <div class="mb-4 p-3 bg-light rounded d-flex align-items-center gap-3" id="conf-pay">
+                                <i class="fas fa-mobile-alt text-success fa-lg"></i>
+                                <div>
+                                    <div class="fw-bold" id="conf-pay-label">Bankily</div>
+                                    <div class="text-muted small">Envoi de preuve requis après la réservation</div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary ms-auto" onclick="goToStep2()">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+
+                            <div class="alert alert-info py-2 small mb-4">
+                                <i class="fas fa-info-circle me-2"></i>
+                                En cliquant sur <strong>Confirmer ma réservation</strong>, votre réservation sera créée et vous devrez envoyer votre preuve de paiement Bankily.
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-outline-secondary btn-lg" onclick="goToStep2()">
+                                    <i class="fas fa-arrow-left me-2"></i>Retour
+                                </button>
+                                <button type="submit" class="btn btn-primary btn-lg flex-grow-1 fw-bold" id="submitBtn">
+                                    <i class="fas fa-lock me-2"></i>Confirmer ma réservation
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- Right : Recap sticky -->
+        <div class="col-lg-5">
+            <div class="recap-card">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light py-3">
+                        <h6 class="mb-0 fw-bold"><i class="fas fa-receipt me-2 text-primary"></i>Récapitulatif</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width:36px;height:36px;">
+                                    <i class="fas fa-bed text-primary"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">{{ type_chambre.libelle }}</div>
+                                    <div class="text-muted small">{{ hotel.nom }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if type_chambre.equipements.all %}
+                        <div class="mb-3">
+                            {% for eq in type_chambre.equipements.all|slice:":6" %}
+                            <span class="badge bg-light text-dark border me-1 mb-1">{{ eq.nom }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="recap-row"><span class="text-muted"><i class="fas fa-calendar-check me-1"></i>Arrivée</span><strong>{{ date_arrivee }}</strong></div>
+                        <div class="recap-row"><span class="text-muted"><i class="fas fa-calendar-times me-1"></i>Départ</span><strong>{{ date_depart }}</strong></div>
+                        <div class="recap-row"><span class="text-muted"><i class="fas fa-moon me-1"></i>Durée</span><strong>{{ nombre_nuits }} nuit(s)</strong></div>
+                        <div class="recap-row">
+                            <span class="text-muted"><i class="fas fa-users me-1"></i>Personnes</span>
+                            <strong>{{ adultes }} adulte(s){% if enfants %} + {{ enfants }} enfant(s){% endif %}</strong>
+                        </div>
+                        <div class="recap-row">
+                            <span class="text-muted">Prix/nuit</span>
+                            <strong>{{ type_chambre.prix_nuit }} MRU</strong>
+                        </div>
+
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <span class="fw-bold fs-6">Total estimé</span>
+                            <span class="fw-bold fs-4 text-primary">{{ montant_chambre|floatformat:0 }} MRU</span>
+                        </div>
+                        <div class="text-muted small mt-1">* Services additionnels non inclus</div>
+
+                        <div class="mt-3 p-2 bg-light rounded small">
+                            <i class="fas fa-shield-alt text-success me-1"></i>
+                            Le numéro exact de chambre vous sera révélé après confirmation du paiement.
+                        </div>
+
+                        <!-- Méthodes acceptées -->
+                        <div class="mt-3 pt-3 border-top">
+                            <div class="text-muted small fw-semibold mb-2">Paiements acceptés</div>
+                            <div class="d-flex gap-2 align-items-center">
+                                <div class="badge bg-success bg-opacity-10 text-success border border-success">
+                                    <i class="fas fa-mobile-alt me-1"></i>Bankily
+                                </div>
+                                <div class="badge bg-secondary bg-opacity-10 text-muted border">
+                                    <i class="fas fa-credit-card me-1"></i>Visa (bientôt)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentStep = 1;
+let selectedPayment = '';
+
+function setStep(step) {
+    // Panels
+    document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + step).classList.add('active');
+
+    // Indicators
+    document.querySelectorAll('.step-item').forEach((el, i) => {
+        el.classList.remove('active', 'done');
+        if (i + 1 < step) el.classList.add('done');
+        else if (i + 1 === step) el.classList.add('active');
+    });
+
+    currentStep = step;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function validateStep1() {
+    const prenom = document.getElementById('f_prenom').value.trim();
+    const nom = document.getElementById('f_nom').value.trim();
+    const email = document.getElementById('f_email').value.trim();
+    const telephone = document.getElementById('f_telephone').value.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!prenom || !nom) { alert('Veuillez renseigner votre prénom et nom.'); return false; }
+    if (!email || !emailRegex.test(email)) { alert('Veuillez entrer un email valide.'); return false; }
+    if (!telephone || telephone.length < 8) { alert('Veuillez entrer un numéro de téléphone valide.'); return false; }
+    return true;
+}
+
+function goToStep1() { setStep(1); }
+
+function goToStep2() {
+    if (!validateStep1()) return;
+    // Update summary
+    const prenom = document.getElementById('f_prenom').value.trim();
+    const nom = document.getElementById('f_nom').value.trim();
+    const email = document.getElementById('f_email').value.trim();
+    const tel = document.getElementById('f_telephone').value.trim();
+    document.getElementById('summary-name').textContent = prenom + ' ' + nom;
+    document.getElementById('summary-contact').textContent = email + ' · ' + tel;
+    setStep(2);
+}
+
+function goToStep3() {
+    if (!selectedPayment) {
+        document.getElementById('pay-error').classList.remove('d-none');
+        return;
+    }
+    document.getElementById('pay-error').classList.add('d-none');
+
+    // Update confirmation
+    const prenom = document.getElementById('f_prenom').value.trim();
+    const nom = document.getElementById('f_nom').value.trim();
+    const email = document.getElementById('f_email').value.trim();
+    const tel = document.getElementById('f_telephone').value.trim();
+    document.getElementById('conf-name').textContent = prenom + ' ' + nom;
+    document.getElementById('conf-email').textContent = email;
+    document.getElementById('conf-tel').textContent = tel;
+
+    const payLabels = { 'bankily': 'Bankily — Mobile Money' };
+    document.getElementById('conf-pay-label').textContent = payLabels[selectedPayment] || selectedPayment;
+
+    setStep(3);
+}
+
+function selectPayment(mode) {
+    // Reset all options
+    document.querySelectorAll('.pay-option:not(.disabled)').forEach(o => o.classList.remove('selected'));
+    document.getElementById('bankily-details').classList.add('d-none');
+
+    if (mode === 'bankily') {
+        document.getElementById('opt-bankily').classList.add('selected');
+        document.getElementById('bankily-details').classList.remove('d-none');
+        selectedPayment = 'bankily';
+        document.getElementById('modePaiementInput').value = 'bankily';
+    }
+    document.getElementById('pay-error').classList.add('d-none');
+}
+
+// Submit button loading state
+document.getElementById('mainForm').addEventListener('submit', function() {
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Traitement en cours...';
+});
+</script>
+{% endblock %}

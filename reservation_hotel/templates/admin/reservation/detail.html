@@ -1,0 +1,365 @@
+{% extends 'admin/base.html' %}
+{% block title %}Réservation #{{ resa.pk }}{% endblock %}
+{% block page_title %}Réservation #{{ resa.pk }}{% endblock %}
+
+{% block content %}
+{% if est_bientot_terminee %}
+<div class="alert alert-warning border-warning d-flex align-items-center gap-3 mb-4" style="border-left:5px solid #f0a500!important;">
+    <i class="fas fa-hourglass-half fa-2x text-warning"></i>
+    <div class="flex-grow-1">
+        <strong><i class="fas fa-exclamation-triangle me-1"></i>Réservation bientôt terminée</strong> — Départ prévu le {{ resa.date_depart|date:"d/m/Y à H:i" }}<br>
+        <small class="text-muted">Cette réservation se termine dans moins de 2 heures.</small>
+    </div>
+</div>
+{% endif %}
+{% if est_expiree %}
+<div class="alert alert-danger border-danger d-flex align-items-center gap-3 mb-4" style="border-left:5px solid #dc3545!important;">
+    <i class="fas fa-clock fa-2x text-danger"></i>
+    <div class="flex-grow-1">
+        <strong><i class="fas fa-exclamation-triangle me-1"></i>Réservation expirée</strong> — Date de départ dépassée ({{ resa.date_depart|date:"d/m/Y H:i" }})<br>
+        <small class="text-muted">Cette notification est visible uniquement par le staff de {{ resa.chambre.hotel.nom }}.</small>
+    </div>
+    {% if peut_prolonger %}
+    <a href="{% url 'reservation:prolonger' resa.pk %}" class="btn btn-warning btn-sm">
+        <i class="fas fa-calendar-plus me-1"></i>Prolonger la réservation
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+<div class="row g-4">
+    <!-- Left column -->
+    <div class="col-lg-8">
+        <!-- Infos principales -->
+        <div class="card mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-info-circle me-2 text-primary"></i>Informations Réservation</h6>
+                {% if resa.statut == 'en_attente' %}<span class="badge bg-warning text-dark fs-6">En attente paiement</span>
+                {% elif resa.statut == 'confirmee' %}<span class="badge bg-info fs-6">Confirmée</span>
+                {% elif resa.statut == 'checkin' %}<span class="badge bg-success fs-6">Check-in en cours</span>
+                {% elif resa.statut == 'checkout' %}<span class="badge bg-secondary fs-6">Terminée</span>
+                {% elif resa.statut == 'annulee' %}<span class="badge bg-danger fs-6">Annulée</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <div class="p-3 bg-light rounded">
+                            <div class="text-muted small mb-1">Client</div>
+                            <div class="fw-bold">{{ resa.client.prenom }} {{ resa.client.nom }}</div>
+                            <div class="text-muted small">{{ resa.client.email }}</div>
+                            <div class="text-muted small">{{ resa.client.telephone }}</div>
+                            <div class="text-muted small">{{ resa.client.nationalite }}</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="p-3 bg-light rounded">
+                            <div class="text-muted small mb-1">Chambre</div>
+                            <div class="fw-bold">N° {{ resa.chambre.numero }} — Étage {{ resa.chambre.etage }}</div>
+                            <div>{{ resa.chambre.type_chambre.libelle }}</div>
+                            <div class="text-muted small">{{ resa.chambre.hotel.nom }}</div>
+                            <div class="text-muted small">Capacité: {{ resa.chambre.type_chambre.capacite }} pers.</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="p-3 border rounded text-center">
+                            <div class="text-muted small">Arrivée</div>
+                            <div class="fw-bold">{{ resa.date_arrivee|date:"d/m/Y" }}</div>
+                            <div class="text-muted small">{{ resa.date_arrivee|date:"H:i" }}</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="p-3 border rounded text-center">
+                            <div class="text-muted small">Départ</div>
+                            <div class="fw-bold">{{ resa.date_depart|date:"d/m/Y" }}</div>
+                            <div class="text-muted small">{{ resa.date_depart|date:"H:i" }}</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="p-3 border rounded text-center">
+                            <div class="text-muted small">Durée</div>
+                            <div class="fw-bold">{{ resa.nombre_nuits }} nuit(s)</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="p-3 border rounded text-center">
+                            <div class="text-muted small">Adultes</div>
+                            <div class="fw-bold">{{ resa.nbr_adultes }}</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="p-3 border rounded text-center">
+                            <div class="text-muted small">Enfants</div>
+                            <div class="fw-bold">{{ resa.nbr_enfants }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Services -->
+        <div class="card mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-concierge-bell me-2 text-success"></i>Services</h6>
+                {% if resa.statut == 'checkin' and current_user.role in 'admin,manager,receptionniste' %}
+                <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addServiceModal">
+                    <i class="fas fa-plus me-1"></i>Ajouter service
+                </button>
+                {% endif %}
+            </div>
+            <div class="card-body p-0">
+                <table class="table mb-0">
+                    <thead class="bg-light">
+                        <tr><th class="ps-3">Service</th><th>Qté</th><th>Date</th><th>Prix unitaire</th><th>Total</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                    {% for rs in resa.reservation_services.all %}
+                    <tr>
+                        <td class="ps-3">
+                            {{ rs.service.nom_service }}
+                            <small class="text-muted d-block">{{ rs.service.get_categorie_display }}</small>
+                        </td>
+                        <td>{{ rs.quantite }}</td>
+                        <td>{{ rs.date_consommation|date:"d/m/Y" }}</td>
+                        <td>{{ rs.service.prix }} MRU</td>
+                        <td class="fw-bold">{{ rs.total }} MRU</td>
+                        <td>
+                            {% if resa.statut == 'checkin' and current_user.role in 'admin,manager,receptionniste' %}
+                            <form method="post" action="{% url 'reservation:supprimer_service' resa.pk rs.pk %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer ce service?')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted py-3">Aucun service</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Paiements -->
+        <div class="card mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-credit-card me-2 text-warning"></i>Paiements</h6>
+                {% if resa.statut != 'annulee' and resa.statut != 'checkout' and resa.montant_restant > 0 and current_user.role in 'admin,manager,receptionniste' %}
+                <a href="{% url 'paiement:ajouter' resa.pk %}" class="btn btn-sm btn-warning text-dark">
+                    <i class="fas fa-plus me-1"></i>Ajouter paiement
+                </a>
+                {% elif resa.montant_restant == 0 and resa.statut not in 'annulee,checkout' %}
+                <span class="badge bg-success"><i class="fas fa-check me-1"></i>Tout payé</span>
+                {% endif %}
+            </div>
+            <div class="card-body p-0">
+                <table class="table mb-0">
+                    <thead class="bg-light">
+                        <tr><th class="ps-3">Mode</th><th>Montant</th><th>Date</th><th>Statut</th><th>Par</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                    {% for p in paiements %}
+                    <tr>
+                        <td class="ps-3">
+                            {% if p.mode == 'bankily' %}<span class="badge bg-success">Bankily</span>
+                            {% elif p.mode == 'visa' %}<span class="badge bg-primary">Visa</span>
+                            {% elif p.mode == 'especes' %}<span class="badge bg-secondary">Espèces</span>
+                            {% else %}<span class="badge bg-info">{{ p.mode }}</span>
+                            {% endif %}
+                            {% if p.est_remboursement %}<span class="badge bg-danger ms-1">Remb.</span>{% endif %}
+                        </td>
+                        <td class="fw-bold">{{ p.montant_paye }} MRU</td>
+                        <td>{{ p.date_paiement|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            {% if p.status == 'confirme' %}<span class="badge bg-success">Confirmé</span>
+                            {% elif p.status == 'en_attente' %}<span class="badge bg-warning text-dark">En attente</span>
+                            {% elif p.status == 'echec' %}<span class="badge bg-danger">Échec</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted small">{{ p.user.email|default:"-" }}</td>
+                        <td>
+                            {% if p.mode == 'bankily' and p.status == 'en_attente' and current_user.role in 'admin,manager,receptionniste' %}
+                            <a href="{% url 'reservation:confirmer_bankily' resa.pk p.pk %}" class="btn btn-sm btn-outline-success">
+                                <i class="fas fa-check me-1"></i>Confirmer
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted py-3">Aucun paiement</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if resa.montant_total > 0 %}
+            <div class="card-footer bg-light">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="text-muted small">Total</div>
+                        <div class="fw-bold">{{ resa.montant_total|floatformat:2 }} MRU</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-muted small">Payé</div>
+                        <div class="fw-bold text-success">{{ resa.montant_paye|floatformat:2 }} MRU</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-muted small">Restant</div>
+                        <div class="fw-bold {% if resa.montant_restant > 0 %}text-danger{% else %}text-success{% endif %}">
+                            {{ resa.montant_restant|floatformat:2 }} MRU
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Historique -->
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-history me-2 text-info"></i>Historique des actions</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="timeline p-3">
+                {% for h in historique %}
+                <div class="d-flex gap-3 mb-3 pb-3 border-bottom">
+                    <div class="flex-shrink-0">
+                        <span class="badge bg-primary rounded-circle p-2">
+                            <i class="fas fa-{% if h.action == 'creation' %}plus{% elif h.action == 'checkin' %}door-open{% elif h.action == 'checkout' %}door-closed{% elif h.action == 'paiement' %}credit-card{% elif h.action == 'annulation' %}times{% elif h.action == 'remboursement' %}undo{% else %}edit{% endif %}"></i>
+                        </span>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">{{ h.get_action_display }}</div>
+                        <div class="text-muted small">{{ h.description }}</div>
+                        <div class="text-muted small mt-1">
+                            <i class="fas fa-clock me-1"></i>{{ h.date_action|date:"d/m/Y H:i" }}
+                            {% if h.email_user %} · <i class="fas fa-user me-1"></i>{{ h.email_user }}{% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-3">Aucun historique</div>
+                {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right column - Actions -->
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-cogs me-2"></i>Actions</h6>
+            </div>
+            <div class="card-body d-grid gap-2">
+                {% if resa.statut == 'confirmee' and current_user.role in 'admin,manager,receptionniste' %}
+                <a href="{% url 'reservation:checkin' resa.pk %}" class="btn btn-success">
+                    <i class="fas fa-door-open me-2"></i>Effectuer Check-in
+                </a>
+                {% endif %}
+
+                {% if resa.statut == 'checkin' and current_user.role in 'admin,manager,receptionniste' %}
+                <a href="{% url 'reservation:checkout' resa.pk %}" class="btn btn-primary">
+                    <i class="fas fa-door-closed me-2"></i>Effectuer Check-out
+                </a>
+                {% endif %}
+
+                {% if resa.statut in 'en_attente,confirmee' and current_user.role in 'admin,manager,receptionniste' %}
+                <a href="{% url 'reservation:annuler' resa.pk %}" class="btn btn-outline-danger">
+                    <i class="fas fa-ban me-2"></i>Annuler la réservation
+                </a>
+                {% endif %}
+
+                {% if resa.statut == 'annulee' and resa.montant_paye > 0 and resa.montant_rembourse == 0 and current_user.role in 'admin,manager,receptionniste' %}
+                <a href="{% url 'reservation:rembourser' resa.pk %}" class="btn btn-warning">
+                    <i class="fas fa-undo me-2"></i>Effectuer remboursement
+                </a>
+                {% endif %}
+
+                <a href="{% url 'reservation:list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Retour à la liste
+                </a>
+            </div>
+        </div>
+
+        <!-- Récapitulatif financier -->
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-calculator me-2 text-success"></i>Récapitulatif</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tr>
+                        <td class="text-muted">Chambre ({{ resa.nombre_nuits }} nuits)</td>
+                        <td class="text-end fw-semibold">{{ resa.montant_chambre|floatformat:2 }} MRU</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Services</td>
+                        <td class="text-end fw-semibold">{{ resa.montant_services|floatformat:2 }} MRU</td>
+                    </tr>
+                    <tr class="table-dark">
+                        <td class="fw-bold">Total</td>
+                        <td class="text-end fw-bold">{{ resa.montant_total|floatformat:2 }} MRU</td>
+                    </tr>
+                    <tr>
+                        <td class="text-success">Payé</td>
+                        <td class="text-end text-success fw-semibold">{{ resa.montant_paye|floatformat:2 }} MRU</td>
+                    </tr>
+                    {% if resa.montant_restant > 0 %}
+                    <tr class="table-danger">
+                        <td class="text-danger fw-bold">Restant dû</td>
+                        <td class="text-end text-danger fw-bold">{{ resa.montant_restant|floatformat:2 }} MRU</td>
+                    </tr>
+                    {% endif %}
+                    {% if resa.montant_rembourse > 0 %}
+                    <tr>
+                        <td class="text-warning">Remboursé</td>
+                        <td class="text-end text-warning fw-semibold">{{ resa.montant_rembourse|floatformat:2 }} MRU</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajouter Service -->
+{% if resa.statut == 'checkin' and current_user.role in 'admin,manager,receptionniste' %}
+<div class="modal fade" id="addServiceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ajouter un service</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'reservation:ajouter_service' resa.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Service</label>
+                        <select name="service" class="form-select" required>
+                            <option value="">— Sélectionner —</option>
+                            {% for s in services_dispo %}
+                            <option value="{{ s.pk }}">{{ s.nom_service }} - {{ s.prix }} MRU ({{ s.get_categorie_display }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Quantité</label>
+                        <input type="number" name="quantite" class="form-control" value="1" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Date consommation</label>
+                        <input type="date" name="date_consommation" class="form-control" value="{% now 'Y-m-d' %}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-success">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
