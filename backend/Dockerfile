@@ -19,7 +19,7 @@ COPY . .
 RUN npm run build
 
 # --- Étape 2 : Production ---
-FROM node:22.10.7-slim
+FROM node:22-slim
 
 WORKDIR /app
 
