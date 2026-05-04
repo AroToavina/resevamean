@@ -1,5 +1,8 @@
 # --- Étape 1 : Build ---
-FROM node:22.10.7-slim AS builder
+FROM node:22-slim
+
+USER root
+RUN apt-get update && apt-get upgrade -y && apt-get clean
 
 WORKDIR /app
 

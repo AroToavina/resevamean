@@ -1,5 +1,7 @@
 # Étape 1 : Build de l'application Angular
-FROM node:22.10.7-slim AS build
+FROM node:22-slim
+USER root
+RUN apt-get update && apt-get upgrade -y && apt-get clean
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
