@@ -1,5 +1,5 @@
 # Étape 1 : Build de l'application Angular
-FROM node:22-slim
+FROM node:22-slim AS builder
 USER root
 RUN apt-get update && apt-get upgrade -y && apt-get clean
 WORKDIR /app
